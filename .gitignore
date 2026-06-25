@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Django
+*.log
+mediafiles/
+staticfiles/
+db.sqlite3
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.turbo/
+npm-debug.log*
+pnpm-debug.log*
+
+# Env / editor
+.DS_Store
+.idea/
+*.local
+
+# Keep the demo .env committed intentionally (dev creds only).
