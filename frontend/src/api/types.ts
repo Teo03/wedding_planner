@@ -1,0 +1,125 @@
+export type Currency = "EUR" | "MKD";
+export type PriceType =
+  | "fixed"
+  | "per_guest"
+  | "tiered_per_guest"
+  | "per_hour"
+  | "starting_at";
+
+export interface Region {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+}
+
+export interface Location {
+  id: number;
+  name: string;
+  slug: string;
+  region: Region | null;
+  latitude: string | null;
+  longitude: string | null;
+}
+
+export interface CategorySummary {
+  id: number;
+  name: string;
+  slug: string;
+  layout_hint: "venue" | "service";
+  icon: string;
+  display_order: number;
+}
+
+export interface Category extends CategorySummary {
+  parent: number | null;
+  description: string;
+  children: CategorySummary[];
+}
+
+export interface PriceTier {
+  id: number;
+  guests_from: number;
+  guests_to: number | null;
+  price_per_guest: string;
+}
+
+export interface Offer {
+  id: number;
+  vendor: number;
+  name: string;
+  description: string;
+  categories: CategorySummary[];
+  price_currency: Currency;
+  price_type: PriceType;
+  price_amount: string | null;
+  price_per_guest: string | null;
+  min_guest_count: number | null;
+  min_capacity: number | null;
+  max_capacity: number | null;
+  attributes: Record<string, unknown>;
+  is_active: boolean;
+  display_order: number;
+  price_tiers: PriceTier[];
+}
+
+export interface MediaItem {
+  id: number;
+  media_type: "image" | "video";
+  url: string;
+  caption: string;
+  display_order: number;
+  is_cover_photo: boolean;
+  offer: number | null;
+}
+
+export interface Contact {
+  phone: string;
+  viber: string;
+  whatsapp: string;
+  email: string;
+  website: string;
+  instagram: string;
+  facebook: string;
+}
+
+export interface VendorListItem {
+  id: number;
+  name: string;
+  slug: string;
+  business_type: string;
+  status: string;
+  location: Location | null;
+  categories: CategorySummary[];
+  cover_photo: string | null;
+  from_price: string | null;
+}
+
+export interface VendorDetail extends VendorListItem {
+  description: string;
+  founded_year: number | null;
+  offers: Offer[];
+  media: MediaItem[];
+  contact: Contact | null;
+  attributes: Record<string, unknown>;
+}
+
+export interface Estimate {
+  offer_id: number;
+  currency: Currency;
+  price_type: PriceType;
+  guest_dependent: boolean;
+  requested_guests: number | null;
+  effective_guests: number | null;
+  min_guest_applied: boolean;
+  unit_price: string | null;
+  total: string | null;
+  note: string;
+}
+
+export interface Paginated<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
