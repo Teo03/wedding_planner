@@ -1,5 +1,5 @@
 from django.core.paginator import Paginator
-from django.contrib.postgres.search import SearchQuery, SearchVector
+from django.db import connection
 from django.db.models import DecimalField, Min, Q
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
@@ -58,10 +58,23 @@ def filter_vendors(vendors, params):
     if max_price := params.get("max_price"):
         vendors = vendors.filter(_from_price__lte=max_price)
     if search := params.get("search"):
-        vendors = vendors.annotate(
-            _search=SearchVector("name", "description")
-        ).filter(_search=SearchQuery(search))
+        vendors = filter_search(vendors, search)
     return vendors
+
+
+def filter_search(vendors, term):
+    # PostgreSQL full-text search over name + description when available; fall
+    # back to a case-insensitive substring match on other backends (e.g. the
+    # SQLite-backed production deploy), which have no SearchVector support.
+    if connection.vendor == "postgresql":
+        from django.contrib.postgres.search import SearchQuery, SearchVector
+
+        return vendors.annotate(
+            _search=SearchVector("name", "description")
+        ).filter(_search=SearchQuery(term))
+    return vendors.filter(
+        Q(name__icontains=term) | Q(description__icontains=term)
+    )
 
 
 def annotate_from_price(vendors):
