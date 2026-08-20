@@ -100,10 +100,22 @@ async function readError(res: Response) {
     if (typeof body.detail === "string") return body.detail;
     if (typeof body.username === "object") return "Username is already taken.";
     if (typeof body.email === "object") return "Email is already registered.";
-    if (typeof body.password === "object") return "Password does not meet requirements.";
+    const passwordErrors = formatFieldErrors(body.password);
+    if (passwordErrors) return `Password does not meet requirements: ${passwordErrors}`;
   } catch {
     // Fall through to the generic HTTP error.
   }
+  return "";
+}
+
+function formatFieldErrors(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item))
+      .filter(Boolean)
+      .join(" ");
+  }
+  if (typeof value === "string") return value;
   return "";
 }
 
