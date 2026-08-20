@@ -4,6 +4,8 @@ from django.utils.text import slugify
 
 from catalog.models import Category
 
+from ._mk_names import MK_CATEGORY_NAMES
+
 V = Category.Layout.VENUE
 S = Category.Layout.SERVICE
 BRIDE = Category.Audience.BRIDE
@@ -107,11 +109,14 @@ class Command(BaseCommand):
     help = "Seed the wedding vendor category taxonomy (idempotent)."
 
     def handle(self, *args, **options):
+        seeded_slugs = set()
         for top_order, (name, layout, icon, subs) in enumerate(TAXONOMY):
+            seeded_slugs.add(slugify(name))
             parent, _ = Category.objects.update_or_create(
                 slug=slugify(name),
                 defaults=dict(
                     name=name,
+                    name_mk=MK_CATEGORY_NAMES.get(name, ""),
                     parent=None,
                     layout_hint=layout,
                     icon=icon,
@@ -121,10 +126,12 @@ class Command(BaseCommand):
             for sub_order, sub in enumerate(subs):
                 sub_name, sub_layout = sub[0], sub[1]
                 audience = sub[2] if len(sub) > 2 else Category.Audience.COUPLE
+                seeded_slugs.add(slugify(f"{name}-{sub_name}"))
                 Category.objects.update_or_create(
                     slug=slugify(f"{name}-{sub_name}"),
                     defaults=dict(
                         name=sub_name,
+                        name_mk=MK_CATEGORY_NAMES.get(sub_name, ""),
                         parent=parent,
                         layout_hint=sub_layout,
                         audience=audience,
@@ -132,9 +139,33 @@ class Command(BaseCommand):
                     ),
                 )
 
+        self.prune(seeded_slugs)
+
         self.stdout.write(
             self.style.SUCCESS(
                 f"Taxonomy seeded: {Category.objects.filter(parent__isnull=True).count()} "
                 f"top-level, {Category.objects.filter(parent__isnull=False).count()} subcategories."
             )
         )
+
+    def prune(self, seeded_slugs):
+        """Drop categories the taxonomy no longer defines.
+
+        Renaming an entry gives it a new slug, so the row under the old slug
+        survives update_or_create and lingers in the nav with nothing in it.
+        Only empty categories are removed -- anything still attached to a
+        vendor is left alone and reported, since deleting it would silently
+        detach real listings.
+        """
+        stale = Category.objects.exclude(slug__in=seeded_slugs)
+        in_use = stale.filter(vendors__isnull=False).distinct()
+        for category in in_use:
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Kept '{category.slug}': no longer in the taxonomy but "
+                    f"still attached to {category.vendors.count()} vendor(s)."
+                )
+            )
+        removed, _ = stale.exclude(pk__in=in_use.values("pk")).delete()
+        if removed:
+            self.stdout.write(f"Pruned {removed} stale categor(y/ies).")

@@ -2,25 +2,34 @@ import { useParams } from "react-router-dom";
 import { api } from "../api/client";
 import { useAsync } from "../hooks/useAsync";
 import OfferCard from "../components/OfferCard";
+import RatingBadge from "../components/RatingBadge";
+import ReviewSection from "../components/ReviewSection";
 import type { Contact } from "../api/types";
+import { useI18n, useLocalName } from "../i18n";
 
 export default function VendorDetail() {
   const { slug = "" } = useParams();
+  const { t } = useI18n();
+  const localName = useLocalName();
   const { data: vendor, loading, error } = useAsync(
     () => api.vendor(slug),
     [slug],
   );
 
-  if (loading) return <p className="text-stone-400">Loading…</p>;
+  if (loading)
+    return <p className="py-12 text-center text-taupe-300">{t("browse.loading")}</p>;
   if (error || !vendor)
-    return <p className="text-stone-400">Vendor not found.</p>;
+    return (
+      <p className="py-12 text-center text-taupe-300">{t("vendor.notFound")}</p>
+    );
 
   const gallery = vendor.media.filter((m) => m.url);
   const cover = vendor.cover_photo ?? gallery[0]?.url;
+  const coverCredit = gallery.find((m) => m.url === cover)?.credit;
 
   return (
     <div className="space-y-8">
-      <div className="overflow-hidden rounded-2xl bg-stone-100">
+      <div className="overflow-hidden rounded-2xl bg-cream-100">
         {cover && (
           <img
             src={cover}
@@ -29,44 +38,59 @@ export default function VendorDetail() {
           />
         )}
       </div>
+      {coverCredit && (
+        <p className="-mt-6 text-right text-xs text-taupe-200">
+          {t("vendor.photoCredit", { credit: coverCredit })}
+        </p>
+      )}
 
       <div>
-        <h1 className="text-3xl font-semibold">{vendor.name}</h1>
-        <p className="mt-1 text-stone-500">
-          {vendor.location?.name}
-          {vendor.location?.region ? ` · ${vendor.location.region.name}` : ""}
+        <h1 className="font-display text-4xl font-semibold">{vendor.name}</h1>
+        <div className="mt-2">
+          <RatingBadge vendor={vendor} size={17} />
+        </div>
+        <p className="mt-1.5 text-taupe-400">
+          {localName(vendor.location)}
+          {vendor.location?.region
+            ? ` · ${localName(vendor.location.region)}`
+            : ""}
+          {vendor.address ? ` · ${vendor.address}` : ""}
         </p>
         <div className="mt-2 flex flex-wrap gap-1">
           {vendor.categories.map((c) => (
             <span
               key={c.id}
-              className="rounded-full bg-rose-50 px-2 py-0.5 text-xs text-rose-700"
+              className="rounded-full bg-olive-100 px-2 py-0.5 text-xs text-olive-400"
             >
-              {c.name}
+              {localName(c)}
             </span>
           ))}
         </div>
       </div>
 
       {vendor.description && (
-        <p className="max-w-3xl text-stone-700">{vendor.description}</p>
+        <p className="max-w-3xl text-taupe-500">{vendor.description}</p>
       )}
 
       <section>
-        <h2 className="mb-3 text-xl font-semibold">Packages</h2>
+        <h2 className="font-display mb-3 text-2xl font-semibold">
+          {t("vendor.packages")}
+        </h2>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {vendor.offers.map((o) => (
             <OfferCard key={o.id} offer={o} vendor={vendor} />
           ))}
           {vendor.offers.length === 0 && (
-            <p className="text-stone-400">No packages listed.</p>
+            <p className="text-taupe-300">{t("vendor.noPackages")}</p>
           )}
         </div>
       </section>
 
       {gallery.length > 1 && (
         <section>
-          <h2 className="mb-3 text-xl font-semibold">Gallery</h2>
+          <h2 className="font-display mb-3 text-2xl font-semibold">
+            {t("vendor.gallery")}
+          </h2>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {gallery.map((m) => (
               <img
@@ -81,16 +105,19 @@ export default function VendorDetail() {
         </section>
       )}
 
+      <ReviewSection vendorSlug={vendor.slug} />
+
       {vendor.contact && <ContactBlock contact={vendor.contact} />}
     </div>
   );
 }
 
 function ContactBlock({ contact }: { contact: Contact }) {
+  const { t } = useI18n();
   const links: { label: string; href: string }[] = [];
   if (contact.phone)
     links.push({
-      label: `Call ${contact.phone}`,
+      label: t("vendor.call", { phone: contact.phone }),
       href: `tel:${contact.phone.replace(/\s/g, "")}`,
     });
   if (contact.whatsapp)
@@ -104,9 +131,9 @@ function ContactBlock({ contact }: { contact: Contact }) {
       href: `viber://chat?number=${encodeURIComponent(contact.viber)}`,
     });
   if (contact.email)
-    links.push({ label: "Email", href: `mailto:${contact.email}` });
+    links.push({ label: t("vendor.email"), href: `mailto:${contact.email}` });
   if (contact.website)
-    links.push({ label: "Website", href: contact.website });
+    links.push({ label: t("vendor.website"), href: contact.website });
   if (contact.instagram)
     links.push({
       label: "Instagram",
@@ -123,8 +150,10 @@ function ContactBlock({ contact }: { contact: Contact }) {
   if (links.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-stone-200 bg-white p-6">
-      <h2 className="mb-3 text-xl font-semibold">Contact</h2>
+    <section className="rounded-2xl border border-taupe-100 bg-white p-6">
+      <h2 className="font-display mb-3 text-2xl font-semibold">
+        {t("vendor.contact")}
+      </h2>
       <div className="flex flex-wrap gap-2">
         {links.map((l) => (
           <a
@@ -132,7 +161,7 @@ function ContactBlock({ contact }: { contact: Contact }) {
             href={l.href}
             target="_blank"
             rel="noreferrer"
-            className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium hover:bg-stone-50"
+            className="rounded-lg border border-taupe-100 px-4 py-2 text-sm font-medium text-forest-600 hover:border-olive-300 hover:bg-cream-50"
           >
             {l.label}
           </a>

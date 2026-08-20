@@ -9,6 +9,7 @@ export type PriceType =
 export interface Region {
   id: number;
   name: string;
+  name_mk: string;
   slug: string;
   description: string;
 }
@@ -16,18 +17,23 @@ export interface Region {
 export interface Location {
   id: number;
   name: string;
+  name_mk: string;
   slug: string;
   region: Region | null;
   latitude: string | null;
   longitude: string | null;
 }
 
+export type Audience = "couple" | "bride" | "groom";
+
 export interface CategorySummary {
   id: number;
   name: string;
+  name_mk: string;
   slug: string;
   layout_hint: "venue" | "service";
   icon: string;
+  audience: Audience;
   display_order: number;
 }
 
@@ -68,6 +74,8 @@ export interface MediaItem {
   media_type: "image" | "video";
   url: string;
   caption: string;
+  credit: string;
+  credit_url: string;
   display_order: number;
   is_cover_photo: boolean;
   offer: number | null;
@@ -93,11 +101,19 @@ export interface VendorListItem {
   categories: CategorySummary[];
   cover_photo: string | null;
   from_price: string | null;
+  /** Site reviews once any exist, otherwise the Google snapshot. */
+  rating: number | null;
+  rating_source: "site" | "google" | null;
+  site_rating: number | null;
+  site_review_count: number;
+  google_rating: number | null;
+  google_review_count: number | null;
 }
 
 export interface VendorDetail extends VendorListItem {
   description: string;
   founded_year: number | null;
+  address: string;
   offers: Offer[];
   media: MediaItem[];
   contact: Contact | null;
@@ -132,7 +148,31 @@ export interface User {
   last_name: string;
 }
 
-export interface AuthTokens {
+export interface RatingSummary {
+  site_rating: number | null;
+  site_review_count: number;
+  google_rating: number | null;
+  google_review_count: number | null;
+  rating: number | null;
+  rating_source: "site" | "google" | null;
+  histogram: Record<string, number>;
+}
+
+export interface Review {
+  id: number;
+  rating: number;
+  title: string;
+  body: string;
+  author: string;
+  author_id: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReviewList {
+  count: number;
+  summary: RatingSummary;
+  results: Review[];
 }
 
 export interface AuthResponse {

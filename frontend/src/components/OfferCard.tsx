@@ -3,6 +3,7 @@ import { useSimulator } from "../context/SimulatorContext";
 import { useAsync } from "../hooks/useAsync";
 import { api } from "../api/client";
 import { convert, formatMoney } from "../lib/currency";
+import { useI18n } from "../i18n";
 
 interface Props {
   offer: Offer;
@@ -11,6 +12,7 @@ interface Props {
 
 export default function OfferCard({ offer, vendor }: Props) {
   const sim = useSimulator();
+  const { t } = useI18n();
   const inSim = sim.has(offer.id);
   const { data: est } = useAsync(
     () => api.estimate(offer.id, sim.guestCount),
@@ -23,11 +25,11 @@ export default function OfferCard({ offer, vendor }: Props) {
       : null;
 
   return (
-    <div className="rounded-lg border border-stone-200 bg-white p-4">
+    <div className="rounded-lg border border-taupe-100 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h4 className="font-medium">{offer.name}</h4>
-          <p className="mt-0.5 text-sm text-stone-500">
+          <p className="mt-0.5 text-sm text-taupe-400">
             {describePrice(offer, sim.currency)}
           </p>
         </div>
@@ -37,43 +39,46 @@ export default function OfferCard({ offer, vendor }: Props) {
           }
           className={`shrink-0 rounded px-3 py-1.5 text-sm font-medium ${
             inSim
-              ? "bg-stone-200 text-stone-700 hover:bg-stone-300"
-              : "bg-rose-600 text-white hover:bg-rose-700"
+              ? "bg-cream-200 text-taupe-500 hover:bg-taupe-100"
+              : "bg-forest-500 text-cream-50 hover:bg-forest-600"
           }`}
         >
-          {inSim ? "Remove" : "Add to budget"}
+          {inSim ? t("vendor.removeFromPlan") : t("vendor.addToPlan")}
         </button>
       </div>
 
       {offer.description && (
-        <p className="mt-2 text-sm text-stone-600">{offer.description}</p>
+        <p className="mt-2 text-sm text-taupe-500">{offer.description}</p>
       )}
 
       {est && (
-        <div className="mt-3 rounded bg-stone-50 px-3 py-2 text-sm">
+        <div className="mt-3 rounded bg-cream-100 px-3 py-2 text-sm">
           {total !== null ? (
             <div className="flex items-center justify-between">
-              <span className="text-stone-500">
-                Est. for {est.effective_guests ?? sim.guestCount} guests
+              <span className="text-taupe-400">
+                {t("vendor.estimateFor", {
+                  guests: est.effective_guests ?? sim.guestCount,
+                })}
               </span>
               <span className="font-semibold">
                 {formatMoney(total, sim.currency)}
               </span>
             </div>
           ) : (
-            <span className="text-stone-500">{est.note}</span>
+            <span className="text-taupe-400">{est.note}</span>
           )}
           {est.min_guest_applied && (
-            <p className="mt-1 text-xs text-amber-700">{est.note}</p>
+            <p className="mt-1 text-xs text-blush-400">{est.note}</p>
           )}
         </div>
       )}
 
       {(offer.min_capacity || offer.max_capacity) && (
-        <p className="mt-2 text-xs text-stone-400">
-          Capacity {offer.min_capacity ?? "?"}
-          {"–"}
-          {offer.max_capacity ?? "?"} guests
+        <p className="mt-2 text-xs text-taupe-300">
+          {t("vendor.capacity", {
+            min: offer.min_capacity ?? "?",
+            max: offer.max_capacity ?? "?",
+          })}
         </p>
       )}
     </div>

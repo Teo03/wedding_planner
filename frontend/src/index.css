@@ -1,5 +1,37 @@
 @import "tailwindcss";
 
+/* Brand palette: Cream · Blush · Taupe · Olive · Forest.
+   Forest carries primary actions, olive the secondary accent, blush the soft
+   highlights, taupe the borders and muted text, cream the page ground. */
+@theme {
+  --color-cream-50: #fbf9f6;
+  --color-cream-100: #f2efea;
+  --color-cream-200: #e8e2d9;
+
+  --color-blush-100: #fae7e2;
+  --color-blush-200: #f0c9c0;
+  --color-blush-300: #e3aea3;
+  --color-blush-400: #d18e7e;
+
+  --color-taupe-100: #ddd5cf;
+  --color-taupe-200: #c4b7b0;
+  --color-taupe-300: #a89a92;
+  --color-taupe-400: #877a72;
+  --color-taupe-500: #6b605a;
+
+  --color-olive-100: #e2e6cf;
+  --color-olive-200: #c3cd97;
+  --color-olive-300: #97a25c;
+  --color-olive-400: #7d874c;
+
+  --color-forest-300: #5c7266;
+  --color-forest-400: #4a5e53;
+  --color-forest-500: #3f5148;
+  --color-forest-600: #33423a;
+
+  --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+}
+
 html,
 body,
 #root {
@@ -9,4 +41,12 @@ body,
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-cream-50);
+  color: var(--color-forest-600);
+}
+
+/* Serif display face for headings and the WP mark. */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
 }

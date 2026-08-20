@@ -2,6 +2,10 @@
 from django.core.management.base import BaseCommand
 from django.utils.text import slugify
 
+from catalog.management.commands._mk_names import (
+    MK_LOCATION_NAMES,
+    MK_REGION_NAMES,
+)
 from locations.models import Location, Region
 
 REGIONS = {
@@ -36,7 +40,11 @@ class Command(BaseCommand):
         for region_name, desc in REGIONS.items():
             Region.objects.update_or_create(
                 slug=slugify(region_name),
-                defaults=dict(name=region_name, description=desc),
+                defaults=dict(
+                    name=region_name,
+                    name_mk=MK_REGION_NAMES.get(region_name, ""),
+                    description=desc,
+                ),
             )
 
         for order, (city, region_name, lat, lng) in enumerate(CITIES):
@@ -47,6 +55,7 @@ class Command(BaseCommand):
                 slug=slugify(city),
                 defaults=dict(
                     name=city,
+                    name_mk=MK_LOCATION_NAMES.get(city, ""),
                     region=region,
                     latitude=lat,
                     longitude=lng,

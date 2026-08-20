@@ -28,6 +28,7 @@ interface SimState {
 
 interface SimContextValue extends SimState {
   setGuestCount: (n: number) => void;
+  setCurrency: (currency: Currency) => void;
   toggleCurrency: () => void;
   addOffer: (offer: Offer, vendor: { name: string; slug: string }) => void;
   removeOffer: (offerId: number) => void;
@@ -54,8 +55,8 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
     Record<string, { name: string; icon: string }>
   >({});
 
-  // Build a subcategory-slug -> top-level-category map so budget line items
-  // can be grouped like a real budget sheet (Venue, Catering, ...).
+  // Build a subcategory-slug -> top-level-category map so plan line items can
+  // be grouped the way a couple thinks about them (Venue, Catering, ...).
   useEffect(() => {
     api
       .categories()
@@ -81,6 +82,7 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
       ...state,
       setGuestCount: (n) =>
         setState((s) => ({ ...s, guestCount: Math.max(1, n || 1) })),
+      setCurrency: (currency) => setState((s) => ({ ...s, currency })),
       toggleCurrency: () =>
         setState((s) => ({
           ...s,

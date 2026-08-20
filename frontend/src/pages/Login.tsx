@@ -13,7 +13,7 @@ export default function Login() {
 
   if (auth.loading) {
     return (
-      <div className="py-16 text-center text-sm text-stone-500">
+      <div className="py-16 text-center text-sm text-taupe-400">
         Loading account...
       </div>
     );
@@ -39,27 +39,27 @@ export default function Login() {
   }
 
   return (
-    <section className="mx-auto max-w-md rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+    <section className="mx-auto max-w-md rounded-xl border border-taupe-100 bg-white p-6 shadow-sm">
       <h1 className="text-2xl font-semibold">Sign in</h1>
       <form onSubmit={submit} className="mt-6 space-y-4">
-        <label className="block text-sm font-medium text-stone-700">
+        <label className="block text-sm font-medium text-forest-600">
           Username
           <input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             autoComplete="username"
-            className="mt-1 w-full rounded border border-stone-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-taupe-100 px-3 py-2"
             required
           />
         </label>
-        <label className="block text-sm font-medium text-stone-700">
+        <label className="block text-sm font-medium text-forest-600">
           Password
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
-            className="mt-1 w-full rounded border border-stone-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-taupe-100 px-3 py-2"
             required
           />
         </label>
@@ -67,14 +67,14 @@ export default function Login() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded bg-rose-600 px-4 py-2 font-medium text-white hover:bg-rose-700 disabled:cursor-wait disabled:bg-rose-300"
+          className="w-full rounded bg-forest-500 px-4 py-2 font-medium text-white hover:bg-forest-600 disabled:cursor-wait disabled:bg-forest-300"
         >
           {submitting ? "Signing in..." : "Sign in"}
         </button>
       </form>
-      <p className="mt-4 text-sm text-stone-600">
+      <p className="mt-4 text-sm text-taupe-500">
         New here?{" "}
-        <Link to="/register" className="font-medium text-rose-700">
+        <Link to="/register" className="font-medium text-olive-400">
           Create an account
         </Link>
       </p>

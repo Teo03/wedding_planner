@@ -2,9 +2,13 @@ import { Link } from "react-router-dom";
 import type { VendorListItem } from "../api/types";
 import { convert, formatMoney } from "../lib/currency";
 import { useSimulator } from "../context/SimulatorContext";
+import { useI18n, useLocalName } from "../i18n";
+import RatingBadge from "./RatingBadge";
 
 export default function VendorCard({ vendor }: { vendor: VendorListItem }) {
   const { currency } = useSimulator();
+  const { t } = useI18n();
+  const localName = useLocalName();
   const from =
     vendor.from_price !== null
       ? convert(Number(vendor.from_price), "EUR", currency)
@@ -13,43 +17,54 @@ export default function VendorCard({ vendor }: { vendor: VendorListItem }) {
   return (
     <Link
       to={`/vendors/${vendor.slug}`}
-      className="group overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm transition hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-xl border border-taupe-100 bg-white transition hover:border-olive-300 hover:shadow-md"
     >
-      <div className="aspect-[3/2] overflow-hidden bg-stone-100">
+      <div className="aspect-[3/2] overflow-hidden bg-cream-100">
         {vendor.cover_photo ? (
           <img
             src={vendor.cover_photo}
             alt={vendor.name}
-            className="h-full w-full object-cover transition group-hover:scale-105"
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-stone-300">
-            No photo
+          <div className="flex h-full items-center justify-center text-taupe-200">
+            {vendor.name}
           </div>
         )}
       </div>
-      <div className="p-4">
+      <div className="flex flex-1 flex-col p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold leading-tight">{vendor.name}</h3>
+          <h3 className="font-display text-lg leading-tight font-semibold text-forest-600">
+            {vendor.name}
+          </h3>
           {from !== null && (
-            <span className="whitespace-nowrap text-sm text-stone-500">
-              from {formatMoney(from, currency)}
+            <span className="shrink-0 text-sm whitespace-nowrap text-taupe-400">
+              {t("vendor.from")} {formatMoney(from, currency)}
             </span>
           )}
         </div>
-        <p className="mt-1 text-sm text-stone-500">
-          {vendor.location?.name ?? "—"}
+
+        <div className="mt-1.5">
+          <RatingBadge vendor={vendor} />
+        </div>
+
+        <p className="mt-1 text-sm text-taupe-400">
+          {vendor.location ? localName(vendor.location) : "—"}
         </p>
-        <div className="mt-2 flex flex-wrap gap-1">
-          {vendor.categories.slice(0, 3).map((c) => (
-            <span
-              key={c.id}
-              className="rounded-full bg-rose-50 px-2 py-0.5 text-xs text-rose-700"
-            >
-              {c.name}
-            </span>
-          ))}
+
+        <div className="mt-auto flex flex-wrap gap-1 pt-3">
+          {vendor.categories
+            .filter((category) => category.icon === "")
+            .slice(0, 2)
+            .map((category) => (
+              <span
+                key={category.id}
+                className="rounded-full bg-olive-100 px-2 py-0.5 text-xs text-olive-400"
+              >
+                {localName(category)}
+              </span>
+            ))}
         </div>
       </div>
     </Link>

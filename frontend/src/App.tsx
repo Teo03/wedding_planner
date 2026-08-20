@@ -6,8 +6,10 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import CategoryBrowse from "./pages/CategoryBrowse";
 import VendorDetail from "./pages/VendorDetail";
-import Simulator from "./pages/Simulator";
+import Vendors from "./pages/Vendors";
+import Plan from "./pages/Plan";
 import { useAuth } from "./context/AuthContext";
+import { useI18n } from "./i18n";
 
 export default function App() {
   return (
@@ -32,6 +34,14 @@ export default function App() {
           }
         />
         <Route
+          path="/vendors"
+          element={
+            <RequireAuth>
+              <Vendors />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/vendors/:slug"
           element={
             <RequireAuth>
@@ -40,13 +50,15 @@ export default function App() {
           }
         />
         <Route
-          path="/simulator"
+          path="/plan"
           element={
             <RequireAuth>
-              <Simulator />
+              <Plan />
             </RequireAuth>
           }
         />
+        {/* The plan list used to live at /simulator; keep old links working. */}
+        <Route path="/simulator" element={<Navigate to="/plan" replace />} />
       </Routes>
     </Layout>
   );
@@ -55,11 +67,12 @@ export default function App() {
 function RequireAuth({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const location = useLocation();
+  const { t } = useI18n();
 
   if (auth.loading) {
     return (
-      <div className="py-16 text-center text-sm text-stone-500">
-        Loading account...
+      <div className="py-16 text-center text-sm text-taupe-400">
+        {t("auth.loadingAccount")}
       </div>
     );
   }

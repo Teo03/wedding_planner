@@ -16,6 +16,9 @@ class Category(models.Model):
         GROOM = "groom", "Groom"
 
     name = models.CharField(max_length=120)
+    name_mk = models.CharField(
+        max_length=140, blank=True, help_text="Macedonian display name."
+    )
     slug = models.SlugField(max_length=140, unique=True)
     parent = models.ForeignKey(
         "self",

@@ -7,6 +7,7 @@ class Region(models.Model):
     """Informal grouping couples search by (e.g. 'Ohrid-Struga Lake Region')."""
 
     name = models.CharField(max_length=120, unique=True)
+    name_mk = models.CharField(max_length=140, blank=True)
     slug = models.SlugField(max_length=140, unique=True)
     description = models.CharField(max_length=255, blank=True)
 
@@ -21,6 +22,7 @@ class Location(TimeStampedModel):
     """A city/municipality a vendor operates from."""
 
     name = models.CharField(max_length=120, unique=True)
+    name_mk = models.CharField(max_length=140, blank=True)
     slug = models.SlugField(max_length=140, unique=True)
     region = models.ForeignKey(
         Region,

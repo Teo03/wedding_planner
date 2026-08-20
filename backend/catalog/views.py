@@ -77,6 +77,7 @@ def serialize_category_summary(category):
     return {
         "id": category.id,
         "name": category.name,
+        "name_mk": category.name_mk,
         "slug": category.slug,
         "layout_hint": category.layout_hint,
         "icon": category.icon,
@@ -89,6 +90,7 @@ def serialize_category(category):
     return {
         "id": category.id,
         "name": category.name,
+        "name_mk": category.name_mk,
         "slug": category.slug,
         "parent": category.parent_id,
         "layout_hint": category.layout_hint,

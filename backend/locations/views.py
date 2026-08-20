@@ -35,6 +35,7 @@ def serialize_region(region):
     return {
         "id": region.id,
         "name": region.name,
+        "name_mk": region.name_mk,
         "slug": region.slug,
         "description": region.description,
     }
@@ -44,6 +45,7 @@ def serialize_location(location):
     return {
         "id": location.id,
         "name": location.name,
+        "name_mk": location.name_mk,
         "slug": location.slug,
         "region": serialize_region(location.region),
         "latitude": str(location.latitude) if location.latitude is not None else None,

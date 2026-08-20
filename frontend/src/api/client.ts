@@ -1,6 +1,9 @@
 import type {
   AuthResponse,
   Category,
+  RatingSummary,
+  Review,
+  ReviewList,
   Estimate,
   Location,
   Offer,
@@ -31,6 +34,10 @@ async function get<T>(path: string, params?: Params): Promise<T> {
     }
   }
   return request<T>(url.toString(), {}, path);
+}
+
+async function del<T>(path: string): Promise<T> {
+  return request<T>(BASE + path, { method: "DELETE" }, path);
 }
 
 async function post<T>(path: string, body: unknown): Promise<T> {
@@ -122,4 +129,16 @@ export const api = {
   offer: (id: number) => get<Offer>(`/offers/${id}/`),
   estimate: (offerId: number, guests?: number) =>
     get<Estimate>(`/offers/${offerId}/estimate/`, { guests }),
+  reviews: (vendorSlug: string) =>
+    get<ReviewList>(`/vendors/${vendorSlug}/reviews/`),
+  postReview: (
+    vendorSlug: string,
+    data: { rating: number; title?: string; body?: string },
+  ) =>
+    post<{ review: Review; summary: RatingSummary }>(
+      `/vendors/${vendorSlug}/reviews/`,
+      data,
+    ),
+  deleteReview: (vendorSlug: string) =>
+    del<{ summary: RatingSummary }>(`/vendors/${vendorSlug}/reviews/`),
 };

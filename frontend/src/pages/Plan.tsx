@@ -5,9 +5,13 @@ import { useAsync } from "../hooks/useAsync";
 import { api } from "../api/client";
 import { convert, formatMoney } from "../lib/currency";
 import type { Estimate } from "../api/types";
+import { useI18n } from "../i18n";
+import GuestCountInput from "../components/GuestCountInput";
+import CurrencyPicker from "../components/CurrencyPicker";
 
-export default function Simulator() {
+export default function Plan() {
   const sim = useSimulator();
+  const { t } = useI18n();
   const ids = sim.items.map((i) => i.offerId).join(",");
 
   const { data: estimates, loading } = useAsync(async () => {
@@ -34,15 +38,13 @@ export default function Simulator() {
   if (sim.items.length === 0) {
     return (
       <div className="py-16 text-center">
-        <h1 className="text-2xl font-semibold">Your budget is empty</h1>
-        <p className="mt-2 text-stone-500">
-          Add packages from vendor pages to build a running estimate.
-        </p>
+        <h1 className="font-display text-3xl font-semibold">{t("plan.empty")}</h1>
+        <p className="mt-2 text-taupe-400">{t("plan.emptyLead")}</p>
         <Link
-          to="/"
-          className="mt-6 inline-block rounded-lg bg-rose-600 px-5 py-2.5 font-medium text-white hover:bg-rose-700"
+          to="/vendors"
+          className="mt-6 inline-block rounded-lg bg-forest-500 px-5 py-2.5 font-medium text-cream-50 hover:bg-forest-600"
         >
-          Browse vendors
+          {t("plan.browseVendors")}
         </Link>
       </div>
     );
@@ -51,37 +53,23 @@ export default function Simulator() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">Wedding budget</h1>
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-sm">
-            Guests
-            <input
-              type="number"
-              min={1}
-              value={sim.guestCount}
-              onChange={(e) => sim.setGuestCount(Number(e.target.value))}
-              className="w-24 rounded border border-stone-300 px-2 py-1"
-            />
-          </label>
-          <button
-            onClick={sim.toggleCurrency}
-            className="rounded border border-stone-300 px-3 py-1 text-sm font-medium hover:bg-stone-100"
-          >
-            {sim.currency}
-          </button>
+        <h1 className="font-display text-3xl font-semibold">{t("plan.title")}</h1>
+        <div className="flex items-center gap-2">
+          <GuestCountInput />
+          <CurrencyPicker />
           <button
             onClick={sim.clear}
-            className="rounded border border-stone-300 px-3 py-1 text-sm text-stone-600 hover:bg-stone-100"
+            className="rounded-md border border-taupe-100 bg-white px-3 py-1.5 text-sm text-taupe-500 hover:border-olive-300"
           >
-            Clear
+            {t("plan.clear")}
           </button>
         </div>
       </div>
 
       <div className="space-y-5">
         {groups.map(([cat, items]) => (
-          <div key={cat} className="rounded-xl border border-stone-200 bg-white">
-            <div className="border-b border-stone-100 px-4 py-2 text-sm font-semibold text-stone-500">
+          <div key={cat} className="rounded-xl border border-taupe-100 bg-white">
+            <div className="border-b border-taupe-100 bg-cream-100 px-4 py-2 text-sm font-semibold text-taupe-500">
               {items[0].categoryIcon} {cat}
             </div>
             <ul>
@@ -99,13 +87,13 @@ export default function Simulator() {
                     <div>
                       <Link
                         to={`/vendors/${item.vendorSlug}`}
-                        className="font-medium hover:text-rose-700"
+                        className="font-medium hover:text-olive-400"
                       >
                         {item.offerName}
                       </Link>
-                      <p className="text-sm text-stone-500">{item.vendorName}</p>
+                      <p className="text-sm text-taupe-400">{item.vendorName}</p>
                       {est?.min_guest_applied && (
-                        <p className="text-xs text-amber-700">{est.note}</p>
+                        <p className="text-xs text-blush-400">{est.note}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
@@ -116,8 +104,8 @@ export default function Simulator() {
                       </span>
                       <button
                         onClick={() => sim.removeOffer(item.offerId)}
-                        className="text-stone-400 hover:text-rose-600"
-                        aria-label="Remove"
+                        className="text-taupe-300 hover:text-blush-400"
+                        aria-label={t("plan.remove")}
                       >
                         ✕
                       </button>
@@ -130,9 +118,10 @@ export default function Simulator() {
         ))}
       </div>
 
-      <div className="sticky bottom-0 flex items-center justify-between rounded-xl bg-stone-900 px-6 py-4 text-white">
-        <span className="text-sm text-stone-300">
-          Estimated total{hasPending ? " (some items need a quote)" : ""}
+      <div className="sticky bottom-0 flex items-center justify-between rounded-xl bg-forest-500 px-6 py-4 text-cream-50">
+        <span className="text-sm text-cream-200">
+          {t("plan.estimatedTotal")}
+          {hasPending ? ` (${t("plan.someNeedQuote")})` : ""}
         </span>
         <span className="text-2xl font-semibold">
           {loading ? "…" : formatMoney(total, sim.currency)}
