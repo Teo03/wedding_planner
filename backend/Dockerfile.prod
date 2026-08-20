@@ -1,0 +1,25 @@
+# Production image for Azure Container Apps: Django API + admin + bundled SPA,
+# served by gunicorn with WhiteNoise. SQLite, re-seeded on boot (no external DB).
+FROM python:3.13-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    DJANGO_DEBUG=0 \
+    DATABASE_URL=sqlite:////app/data/db.sqlite3 \
+    WHITENOISE_ROOT=/app/frontend_dist
+
+WORKDIR /app
+
+# Runtime deps only (no dev/test tooling).
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
+
+# App source (includes the pre-built SPA in frontend_dist/).
+COPY . .
+
+# Collect admin/DRF/Swagger static into STATIC_ROOT for WhiteNoise to serve.
+RUN python manage.py collectstatic --noinput
+
+EXPOSE 8000
+ENTRYPOINT ["sh", "/app/entrypoint.prod.sh"]

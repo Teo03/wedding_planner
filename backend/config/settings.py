@@ -46,6 +46,9 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    # Serves collected static files (admin, DRF browsable API, Swagger UI)
+    # directly from the app process, so no separate static host is needed.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -96,7 +99,30 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "mediafiles"
+# Overridable so uploads can live on the App Service persistent disk (/home).
+MEDIA_ROOT = env("DJANGO_MEDIA_ROOT", default=str(BASE_DIR / "mediafiles"))
+
+# WhiteNoise: compress and hash static files so they can be cached far-future.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"
+    },
+}
+
+# Single-service deploy: when set, WhiteNoise serves the built frontend SPA
+# (index.html + /assets/*) from this directory at the site root. Empty in
+# local/dev, where the frontend runs on its own Vite server.
+WHITENOISE_ROOT = env("WHITENOISE_ROOT", default="")
+WHITENOISE_INDEX_FILE = True
+
+# App Service terminates TLS at the front end and forwards over HTTP, so trust
+# the proxy's protocol header for correct HTTPS detection (CSRF, secure cookies).
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Origins allowed to send unsafe (POST/PUT) requests, e.g. the Django admin
+# login form served over HTTPS. Comma-separated list of scheme+host.
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

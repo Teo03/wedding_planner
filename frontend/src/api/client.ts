@@ -17,7 +17,12 @@ const BASE: string =
 type Params = Record<string, string | number | undefined | null>;
 
 async function get<T>(path: string, params?: Params): Promise<T> {
-  const url = new URL(BASE + path);
+  // Resolve against the page origin so a relative BASE (e.g. "/api", used when
+  // the SPA is served same-origin with the API) is valid. Absolute bases
+  // (e.g. the localhost dev default) ignore the second arg.
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : undefined;
+  const url = new URL(BASE + path, origin);
   if (params) {
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== null && value !== "") {
