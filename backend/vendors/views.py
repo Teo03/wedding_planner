@@ -27,13 +27,15 @@ def vendor_list(request):
     vendors = vendor_queryset()
     vendors = filter_vendors(vendors, request.GET)
     vendors = order_vendors(vendors, request.GET.get("ordering"))
-    return JsonResponse(paginate(request, vendors, serialize_vendor_list))
+    return JsonResponse(
+        paginate(request, vendors, lambda v: serialize_vendor_list(v, request))
+    )
 
 
 @require_GET
 def vendor_detail(request, slug):
     vendor = get_object_or_404(vendor_queryset(), slug=slug)
-    return JsonResponse(serialize_vendor_detail(vendor))
+    return JsonResponse(serialize_vendor_detail(vendor, request))
 
 
 def vendor_queryset():
@@ -160,7 +162,7 @@ def order_vendors(vendors, ordering):
     return vendors.order_by("name")
 
 
-def serialize_vendor_list(vendor):
+def serialize_vendor_list(vendor, request=None):
     return {
         "id": vendor.id,
         "name": vendor.name,
@@ -171,7 +173,7 @@ def serialize_vendor_list(vendor):
         "categories": [
             serialize_category_summary(category) for category in vendor.categories.all()
         ],
-        "cover_photo": cover_photo(vendor),
+        "cover_photo": cover_photo(vendor, request),
         "from_price": from_price(vendor),
         "rating": round(vendor._rating, 2) if getattr(vendor, "_rating", None) else None,
         "rating_source": rating_source(vendor),
@@ -194,8 +196,8 @@ def rating_source(vendor):
     return "google" if vendor.google_rating is not None else None
 
 
-def serialize_vendor_detail(vendor):
-    data = serialize_vendor_list(vendor)
+def serialize_vendor_detail(vendor, request=None):
+    data = serialize_vendor_list(vendor, request)
     data.update(
         {
             "description": vendor.description,
@@ -206,7 +208,9 @@ def serialize_vendor_detail(vendor):
                 for offer in vendor.offers.all()
                 if offer.is_active
             ],
-            "media": [serialize_media(media) for media in vendor.media.all()],
+            "media": [
+                serialize_media(media, request) for media in vendor.media.all()
+            ],
             "contact": serialize_contact(vendor.contact)
             if hasattr(vendor, "contact")
             else None,
@@ -218,11 +222,11 @@ def serialize_vendor_detail(vendor):
     return data
 
 
-def serialize_media(media):
+def serialize_media(media, request=None):
     return {
         "id": media.id,
         "media_type": media.media_type,
-        "url": media.url,
+        "url": absolute(media.url, request),
         "caption": media.caption,
         "credit": media.credit,
         "credit_url": media.credit_url,
@@ -244,11 +248,23 @@ def serialize_contact(contact):
     }
 
 
-def cover_photo(vendor):
+def cover_photo(vendor, request=None):
     media = list(vendor.media.all())
     cover = next((item for item in media if item.is_cover_photo), None)
     cover = cover or (media[0] if media else None)
-    return cover.url if cover else None
+    return absolute(cover.url, request) if cover else None
+
+
+def absolute(url, request):
+    """Make media URLs absolute.
+
+    Uploaded media is served by Django at /media/..., but in development the
+    SPA runs on its own port, so a relative URL resolves against the dev
+    server and 404s. Same-origin production deploys are unaffected.
+    """
+    if not url or not request or url.startswith(("http://", "https://")):
+        return url
+    return request.build_absolute_uri(url)
 
 
 def from_price(vendor):

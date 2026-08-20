@@ -106,6 +106,28 @@ export const en = {
     signInToReview: "Sign in to leave a review.",
   },
 
+  price: {
+    fixed: "{amount} fixed",
+    startingAt: "from {amount}",
+    perHour: "{amount} / hour",
+    perGuest: "{amount} / guest",
+    fromPerGuest: "from {amount} / guest",
+    tiered: "tiered pricing",
+  },
+
+  estimate: {
+    priced: "Priced for {guests} guests.",
+    priced_minimum:
+      "Priced for {guests} guests (vendor minimum) because {requested} is below the minimum.",
+    need_guests: "Enter a guest count to price this offer.",
+    no_price: "No price set for this offer.",
+    no_per_guest_price: "No per-guest price set.",
+    no_tier: "No price tier matches {guests} guests.",
+    flat_fixed: "Flat package price.",
+    flat_per_hour: "Hourly rate; multiply by the number of booked hours.",
+    flat_starting_at: "Starting price; final quote depends on the vendor.",
+  },
+
   plan: {
     title: "Wedding Plan List",
     empty: "Your wedding plan list is empty",
@@ -129,6 +151,12 @@ export const en = {
     haveAccount: "Already have an account?",
     loadingAccount: "Loading account…",
     signInRequired: "Sign in to browse the catalog.",
+    signingIn: "Signing in…",
+    signInFailed: "Could not sign in.",
+    creating: "Creating account…",
+    createFailed: "Could not create the account.",
+    newHere: "New here?",
+    createAccount: "Create an account",
   },
 
   footer: "Wedding vendor catalog · Macedonia",
@@ -229,6 +257,28 @@ export const mk: DeepPartial<typeof en> = {
     signInToReview: "Најавете се за да оставите рецензија.",
   },
 
+  price: {
+    fixed: "{amount} фиксно",
+    startingAt: "од {amount}",
+    perHour: "{amount} / час",
+    perGuest: "{amount} / гостин",
+    fromPerGuest: "од {amount} / гостин",
+    tiered: "цена по ранг",
+  },
+
+  estimate: {
+    priced: "Цена за {guests} гости.",
+    priced_minimum:
+      "Цената е за {guests} гости (минимум на понудувачот), бидејќи {requested} е под минимумот.",
+    need_guests: "Внесете број на гости за да се пресмета цената.",
+    no_price: "Нема поставена цена за оваа понуда.",
+    no_per_guest_price: "Нема поставена цена по гостин.",
+    no_tier: "Нема ценовен ранг за {guests} гости.",
+    flat_fixed: "Фиксна цена на пакетот.",
+    flat_per_hour: "Цена по час; помножете со бројот на резервирани часови.",
+    flat_starting_at: "Почетна цена; конечната понуда зависи од понудувачот.",
+  },
+
   plan: {
     title: "Список за свадба",
     empty: "Вашиот список за свадба е празен",
@@ -253,6 +303,12 @@ export const mk: DeepPartial<typeof en> = {
     haveAccount: "Веќе имате сметка?",
     loadingAccount: "Се вчитува сметката…",
     signInRequired: "Најавете се за да го разгледате каталогот.",
+    signingIn: "Се најавувате…",
+    signInFailed: "Најавата не успеа.",
+    creating: "Се креира сметка…",
+    createFailed: "Сметката не е креирана.",
+    newHere: "Немате сметка?",
+    createAccount: "Креирајте сметка",
   },
 
   footer: "Каталог на свадбени понудувачи · Македонија",

@@ -109,7 +109,9 @@ def serialize_offer(offer):
         "id": offer.id,
         "vendor": offer.vendor_id,
         "name": offer.name,
+        "name_mk": offer.name_mk,
         "description": offer.description,
+        "description_mk": offer.description_mk,
         "categories": [
             serialize_category_summary(category) for category in offer.categories.all()
         ],

@@ -3,7 +3,7 @@ import { useSimulator } from "../context/SimulatorContext";
 import { useAsync } from "../hooks/useAsync";
 import { api } from "../api/client";
 import { convert, formatMoney } from "../lib/currency";
-import { useI18n } from "../i18n";
+import { useEstimateNote, useI18n, useLocalName } from "../i18n";
 
 interface Props {
   offer: Offer;
@@ -13,6 +13,8 @@ interface Props {
 export default function OfferCard({ offer, vendor }: Props) {
   const sim = useSimulator();
   const { t } = useI18n();
+  const localName = useLocalName();
+  const estimateNote = useEstimateNote();
   const inSim = sim.has(offer.id);
   const { data: est } = useAsync(
     () => api.estimate(offer.id, sim.guestCount),
@@ -28,9 +30,9 @@ export default function OfferCard({ offer, vendor }: Props) {
     <div className="rounded-lg border border-taupe-100 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h4 className="font-medium">{offer.name}</h4>
+          <h4 className="font-medium">{localName(offer)}</h4>
           <p className="mt-0.5 text-sm text-taupe-400">
-            {describePrice(offer, sim.currency)}
+            {describePrice(offer, sim.currency, t)}
           </p>
         </div>
         <button
@@ -48,7 +50,9 @@ export default function OfferCard({ offer, vendor }: Props) {
       </div>
 
       {offer.description && (
-        <p className="mt-2 text-sm text-taupe-500">{offer.description}</p>
+        <p className="mt-2 text-sm text-taupe-500">
+          {localName({ name: offer.description, name_mk: offer.description_mk })}
+        </p>
       )}
 
       {est && (
@@ -65,10 +69,10 @@ export default function OfferCard({ offer, vendor }: Props) {
               </span>
             </div>
           ) : (
-            <span className="text-taupe-400">{est.note}</span>
+            <span className="text-taupe-400">{estimateNote(est)}</span>
           )}
           {est.min_guest_applied && (
-            <p className="mt-1 text-xs text-blush-400">{est.note}</p>
+            <p className="mt-1 text-xs text-blush-400">{estimateNote(est)}</p>
           )}
         </div>
       )}
@@ -85,24 +89,35 @@ export default function OfferCard({ offer, vendor }: Props) {
   );
 }
 
-function describePrice(offer: Offer, currency: Currency): string {
+type Translate = (key: string, vars?: Record<string, string | number>) => string;
+
+function describePrice(
+  offer: Offer,
+  currency: Currency,
+  t: Translate,
+): string {
   const money = (v: string | null) =>
     v ? formatMoney(convert(Number(v), offer.price_currency, currency), currency) : "";
   switch (offer.price_type) {
     case "fixed":
-      return `${money(offer.price_amount)} fixed`;
+      return t("price.fixed", { amount: money(offer.price_amount) });
     case "starting_at":
-      return `from ${money(offer.price_amount)}`;
+      return t("price.startingAt", { amount: money(offer.price_amount) });
     case "per_hour":
-      return `${money(offer.price_amount)} / hour`;
+      return t("price.perHour", { amount: money(offer.price_amount) });
     case "per_guest":
-      return `${money(offer.price_per_guest)} / guest`;
+      return t("price.perGuest", { amount: money(offer.price_per_guest) });
     case "tiered_per_guest": {
-      if (!offer.price_tiers.length) return "tiered pricing";
+      if (!offer.price_tiers.length) return t("price.tiered");
       const min = Math.min(
-        ...offer.price_tiers.map((t) => Number(t.price_per_guest)),
+        ...offer.price_tiers.map((tier) => Number(tier.price_per_guest)),
       );
-      return `from ${formatMoney(convert(min, offer.price_currency, currency), currency)} / guest`;
+      return t("price.fromPerGuest", {
+        amount: formatMoney(
+          convert(min, offer.price_currency, currency),
+          currency,
+        ),
+      });
     }
     default:
       return "";

@@ -12,9 +12,13 @@ import type { Currency, Offer } from "../api/types";
 export interface SimItem {
   offerId: number;
   offerName: string;
+  /** Kept alongside the English name so a saved plan re-renders in either
+   *  language without re-fetching every offer. */
+  offerNameMk: string;
   vendorName: string;
   vendorSlug: string;
   categoryName: string;
+  categoryNameMk: string;
   categoryIcon: string;
   priceType: Offer["price_type"];
   offerCurrency: Currency;
@@ -52,7 +56,7 @@ function load(): SimState {
 export function SimulatorProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SimState>(load);
   const [subToTop, setSubToTop] = useState<
-    Record<string, { name: string; icon: string }>
+    Record<string, { name: string; name_mk: string; icon: string }>
   >({});
 
   // Build a subcategory-slug -> top-level-category map so plan line items can
@@ -61,11 +65,19 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
     api
       .categories()
       .then((cats) => {
-        const map: Record<string, { name: string; icon: string }> = {};
+        const map: Record<
+          string,
+          { name: string; name_mk: string; icon: string }
+        > = {};
         for (const top of cats) {
-          map[top.slug] = { name: top.name, icon: top.icon };
+          const entry = {
+            name: top.name,
+            name_mk: top.name_mk,
+            icon: top.icon,
+          };
+          map[top.slug] = entry;
           for (const child of top.children) {
-            map[child.slug] = { name: top.name, icon: top.icon };
+            map[child.slug] = entry;
           }
         }
         setSubToTop(map);
@@ -94,14 +106,17 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
           const topSlug = offer.categories[0]?.slug;
           const top = (topSlug && subToTop[topSlug]) || {
             name: "Other",
+            name_mk: "Друго",
             icon: "•",
           };
           const item: SimItem = {
             offerId: offer.id,
             offerName: offer.name,
+            offerNameMk: offer.name_mk,
             vendorName: vendor.name,
             vendorSlug: vendor.slug,
             categoryName: top.name,
+            categoryNameMk: top.name_mk,
             categoryIcon: top.icon,
             priceType: offer.price_type,
             offerCurrency: offer.price_currency,

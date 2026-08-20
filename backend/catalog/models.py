@@ -77,7 +77,9 @@ class Offer(TimeStampedModel):
         "vendors.Vendor", on_delete=models.CASCADE, related_name="offers"
     )
     name = models.CharField(max_length=200)
+    name_mk = models.CharField(max_length=220, blank=True)
     description = models.TextField(blank=True)
+    description_mk = models.TextField(blank=True)
     categories = models.ManyToManyField(Category, related_name="offers", blank=True)
 
     price_currency = models.CharField(

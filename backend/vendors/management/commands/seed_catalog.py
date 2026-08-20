@@ -30,6 +30,10 @@ from django.utils.text import slugify
 from catalog.models import Category, Offer, OfferPriceTier
 from locations.models import Location, Region
 from media.models import Media
+from catalog.management.commands._mk_names import (
+    MK_OFFER_DESCRIPTION,
+    MK_OFFER_NAMES,
+)
 from vendors.models import Contact, Vendor
 
 SEED_DIR = Path(settings.BASE_DIR) / "seed_data"
@@ -332,7 +336,9 @@ class Command(BaseCommand):
             key = f"{vendor.slug}:{label}"
             value = stable_rand(key, lo, hi)
             defaults = dict(
+                name_mk=MK_OFFER_NAMES.get(label, ""),
                 description="Indicative package price for planning purposes.",
+                description_mk=MK_OFFER_DESCRIPTION,
                 price_currency=Offer.Currency.EUR,
                 price_type=price_type,
                 display_order=index,

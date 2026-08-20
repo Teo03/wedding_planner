@@ -94,6 +94,29 @@ export function useLocalName() {
   };
 }
 
+/**
+ * Render a pricing note in the active language.
+ *
+ * The API sends both the English prose and a code + params; prefer the code so
+ * the sentence can be rebuilt in Macedonian, and fall back to the prose if the
+ * backend ever emits a code the UI doesn't know.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useEstimateNote() {
+  const { t } = useI18n();
+  return (estimate: {
+    note: string;
+    note_code?: string;
+    note_params?: Record<string, string | number>;
+  } | null | undefined) => {
+    if (!estimate) return "";
+    if (!estimate.note_code) return estimate.note;
+    const key = `estimate.${estimate.note_code}`;
+    const rendered = t(key, estimate.note_params);
+    return rendered === key ? estimate.note : rendered;
+  };
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export function useI18n() {
   const ctx = useContext(Ctx);

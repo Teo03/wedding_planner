@@ -54,7 +54,9 @@ export interface Offer {
   id: number;
   vendor: number;
   name: string;
+  name_mk: string;
   description: string;
+  description_mk: string;
   categories: CategorySummary[];
   price_currency: Currency;
   price_type: PriceType;
@@ -131,6 +133,9 @@ export interface Estimate {
   unit_price: string | null;
   total: string | null;
   note: string;
+  /** Key + values for the note, so it can be rendered in the reader's language. */
+  note_code: string;
+  note_params: Record<string, number | string>;
 }
 
 export interface Paginated<T> {

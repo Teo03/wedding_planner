@@ -3,7 +3,7 @@
 Single source of truth for turning an Offer + guest count into an estimate,
 so pricing rules never drift between admin-entered data and the frontend.
 """
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Optional
 
@@ -27,7 +27,11 @@ class Estimate:
     min_guest_applied: bool
     unit_price: Optional[str]  # per-guest rate used, as a money string
     total: Optional[str]  # computed total, as a money string
-    note: str
+    note: str  # English prose, kept for API consumers
+    # The note again as a key + values, so a client can render it in the
+    # reader's language instead of re-parsing the English sentence.
+    note_code: str = ""
+    note_params: dict = field(default_factory=dict)
 
 
 def _money(value) -> str:
@@ -62,6 +66,8 @@ def estimate_offer(offer, guests: Optional[int] = None) -> dict:
             unit_price=None,
             total=None,
             note="",
+            note_code="",
+            note_params={},
         )
         base.update(kwargs)
         return asdict(Estimate(**base))
@@ -69,16 +75,20 @@ def estimate_offer(offer, guests: Optional[int] = None) -> dict:
     # Flat, guest-independent price types.
     if not guest_dependent:
         if offer.price_amount is None:
-            return build(note="No price set for this offer.")
+            return build(note="No price set for this offer.", note_code="no_price")
         return build(
             unit_price=_money(offer.price_amount),
             total=_money(offer.price_amount),
             note=_FLAT_NOTES.get(ptype, ""),
+            note_code=f"flat_{ptype}" if ptype in _FLAT_NOTES else "",
         )
 
     # Guest-dependent types require a guest count.
     if guests is None:
-        return build(note="Enter a guest count to price this offer.")
+        return build(
+            note="Enter a guest count to price this offer.",
+            note_code="need_guests",
+        )
 
     effective = guests
     min_applied = False
@@ -92,6 +102,7 @@ def estimate_offer(offer, guests: Optional[int] = None) -> dict:
                 effective_guests=effective,
                 min_guest_applied=min_applied,
                 note="No per-guest price set.",
+                note_code="no_per_guest_price",
             )
         unit = offer.price_per_guest
     else:  # tiered_per_guest
@@ -101,6 +112,8 @@ def estimate_offer(offer, guests: Optional[int] = None) -> dict:
                 effective_guests=effective,
                 min_guest_applied=min_applied,
                 note=f"No price tier matches {effective} guests.",
+                note_code="no_tier",
+                note_params={"guests": effective},
             )
         unit = tier.price_per_guest
 
@@ -110,8 +123,10 @@ def estimate_offer(offer, guests: Optional[int] = None) -> dict:
             f"Priced for {effective} guests (vendor minimum) "
             f"because {guests} is below the minimum."
         )
+        note_code = "priced_minimum"
     else:
         note = f"Priced for {effective} guests."
+        note_code = "priced"
 
     return build(
         effective_guests=effective,
@@ -119,4 +134,6 @@ def estimate_offer(offer, guests: Optional[int] = None) -> dict:
         unit_price=_money(unit),
         total=_money(total),
         note=note,
+        note_code=note_code,
+        note_params={"guests": effective, "requested": guests},
     )

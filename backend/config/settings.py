@@ -143,8 +143,8 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Wedding Vendor Catalog API",
-    "DESCRIPTION": "Browse/discover catalog of wedding vendors in North Macedonia.",
+    "TITLE": "Wedding Planner API",
+    "DESCRIPTION": "Browse/discover catalog of wedding vendors in Macedonia.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }

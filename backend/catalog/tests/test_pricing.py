@@ -101,3 +101,36 @@ def test_per_hour_returns_flat_amount(vendor):
     est = estimate_offer(offer, guests=100)
     assert est["total"] == "120.00"
     assert est["guest_dependent"] is False
+
+
+@pytest.mark.django_db
+def test_estimate_note_carries_a_code_and_params_for_translation(vendor):
+    """The UI rebuilds the sentence in Macedonian from the code, not the prose."""
+    offer = make_offer(
+        vendor,
+        price_type="per_guest",
+        price_per_guest=Decimal("30"),
+        min_guest_count=100,
+    )
+    est = estimate_offer(offer, guests=80)
+    assert est["note_code"] == "priced_minimum"
+    assert est["note_params"] == {"guests": 100, "requested": 80}
+    # The English prose stays available for non-UI consumers.
+    assert "100 guests" in est["note"]
+
+
+@pytest.mark.django_db
+def test_estimate_codes_cover_the_other_branches(vendor):
+    per_guest = make_offer(
+        vendor, price_type="per_guest", price_per_guest=Decimal("20")
+    )
+    assert estimate_offer(per_guest, guests=None)["note_code"] == "need_guests"
+    assert estimate_offer(per_guest, guests=50)["note_code"] == "priced"
+
+    flat = make_offer(
+        vendor, name="Flat", price_type="fixed", price_amount=Decimal("500")
+    )
+    assert estimate_offer(flat)["note_code"] == "flat_fixed"
+
+    unpriced = make_offer(vendor, name="Unpriced", price_type="fixed")
+    assert estimate_offer(unpriced)["note_code"] == "no_price"

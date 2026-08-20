@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
+import { useAuth } from "../context/AuthContext";
 import { useSimulator } from "../context/SimulatorContext";
 import { useI18n } from "../i18n";
 import CategoryMenu from "./CategoryMenu";
@@ -14,8 +15,12 @@ import SideDrawer from "./SideDrawer";
  */
 export default function Layout({ children }: { children: ReactNode }) {
   const sim = useSimulator();
+  const auth = useAuth();
   const { t } = useI18n();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // The catalog endpoints are authenticated, so these menus would open empty
+  // for a signed-out visitor rather than simply not being there.
+  const signedIn = Boolean(auth.user);
 
   return (
     <div className="flex min-h-full flex-col bg-cream-50 text-forest-600">
@@ -23,17 +28,20 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
           <Logo />
 
-          <nav className="hidden items-center gap-1 sm:flex">
-            <CategoryMenu />
-            <Link
-              to="/vendors"
-              className="rounded-md px-2 py-1.5 text-sm font-medium text-forest-600 hover:bg-cream-100"
-            >
-              {t("nav.vendors")}
-            </Link>
-          </nav>
+          {signedIn && (
+            <nav className="hidden items-center gap-1 sm:flex">
+              <CategoryMenu />
+              <Link
+                to="/vendors"
+                className="rounded-md px-2 py-1.5 text-sm font-medium text-forest-600 hover:bg-cream-100"
+              >
+                {t("nav.vendors")}
+              </Link>
+            </nav>
+          )}
 
           <div className="ml-auto flex items-center gap-2">
+            {signedIn && (
             <Link
               to="/plan"
               className="relative rounded-md bg-forest-500 px-3 py-1.5 text-sm font-medium text-cream-50 hover:bg-forest-600"
@@ -46,6 +54,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 </span>
               )}
             </Link>
+            )}
 
             <button
               onClick={() => setDrawerOpen(true)}

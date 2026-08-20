@@ -90,6 +90,7 @@ export default function SideDrawer({
           </Row>
         </Section>
 
+        {auth.user && (
         <Section title={t("nav.categories")}>
           <ul className="space-y-0.5">
             {categories?.map((category) => (
@@ -106,6 +107,7 @@ export default function SideDrawer({
             ))}
           </ul>
         </Section>
+        )}
 
         <div className="mt-auto border-t border-taupe-100 p-4">
           {auth.user ? (

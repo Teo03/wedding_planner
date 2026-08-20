@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useI18n } from "../i18n";
 
 export default function Register() {
   const auth = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     username: "",
@@ -18,7 +20,7 @@ export default function Register() {
   if (auth.loading) {
     return (
       <div className="py-16 text-center text-sm text-taupe-400">
-        Loading account...
+        {t("auth.loadingAccount")}
       </div>
     );
   }
@@ -35,7 +37,7 @@ export default function Register() {
       await auth.register(form);
       navigate("/", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create account.");
+      setError(err instanceof Error ? err.message : t("auth.createFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -47,11 +49,11 @@ export default function Register() {
 
   return (
     <section className="mx-auto max-w-md rounded-xl border border-taupe-100 bg-white p-6 shadow-sm">
-      <h1 className="text-2xl font-semibold">Create account</h1>
+      <h1 className="font-display text-3xl font-semibold">{t("auth.signUp")}</h1>
       <form onSubmit={submit} className="mt-6 space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block text-sm font-medium text-forest-600">
-            First name
+            {t("auth.firstName")}
             <input
               value={form.first_name}
               onChange={(e) => update("first_name", e.target.value)}
@@ -60,7 +62,7 @@ export default function Register() {
             />
           </label>
           <label className="block text-sm font-medium text-forest-600">
-            Last name
+            {t("auth.lastName")}
             <input
               value={form.last_name}
               onChange={(e) => update("last_name", e.target.value)}
@@ -70,7 +72,7 @@ export default function Register() {
           </label>
         </div>
         <label className="block text-sm font-medium text-forest-600">
-          Username
+          {t("auth.username")}
           <input
             value={form.username}
             onChange={(e) => update("username", e.target.value)}
@@ -80,7 +82,7 @@ export default function Register() {
           />
         </label>
         <label className="block text-sm font-medium text-forest-600">
-          Email
+          {t("auth.email")}
           <input
             type="email"
             value={form.email}
@@ -91,7 +93,7 @@ export default function Register() {
           />
         </label>
         <label className="block text-sm font-medium text-forest-600">
-          Password
+          {t("auth.password")}
           <input
             type="password"
             value={form.password}
@@ -101,19 +103,19 @@ export default function Register() {
             required
           />
         </label>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-blush-400">{error}</p>}
         <button
           type="submit"
           disabled={submitting}
           className="w-full rounded bg-forest-500 px-4 py-2 font-medium text-white hover:bg-forest-600 disabled:cursor-wait disabled:bg-forest-300"
         >
-          {submitting ? "Creating..." : "Create account"}
+          {submitting ? t("auth.creating") : t("auth.signUp")}
         </button>
       </form>
       <p className="mt-4 text-sm text-taupe-500">
-        Already have an account?{" "}
+        {t("auth.haveAccount")}{" "}
         <Link to="/login" className="font-medium text-olive-400">
-          Sign in
+          {t("auth.signIn")}
         </Link>
       </p>
     </section>

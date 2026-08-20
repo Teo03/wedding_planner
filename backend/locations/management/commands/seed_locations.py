@@ -1,4 +1,4 @@
-"""Seed North Macedonia cities/municipalities relevant to weddings (idempotent)."""
+"""Seed Macedonia cities/municipalities relevant to weddings (idempotent)."""
 from django.core.management.base import BaseCommand
 from django.utils.text import slugify
 
@@ -34,7 +34,7 @@ CITIES = [
 
 
 class Command(BaseCommand):
-    help = "Seed North Macedonia locations and regions (idempotent)."
+    help = "Seed Macedonia locations and regions (idempotent)."
 
     def handle(self, *args, **options):
         for region_name, desc in REGIONS.items():

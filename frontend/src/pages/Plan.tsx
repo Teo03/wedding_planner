@@ -5,13 +5,15 @@ import { useAsync } from "../hooks/useAsync";
 import { api } from "../api/client";
 import { convert, formatMoney } from "../lib/currency";
 import type { Estimate } from "../api/types";
-import { useI18n } from "../i18n";
+import { useEstimateNote, useI18n, useLocalName } from "../i18n";
 import GuestCountInput from "../components/GuestCountInput";
 import CurrencyPicker from "../components/CurrencyPicker";
 
 export default function Plan() {
   const sim = useSimulator();
   const { t } = useI18n();
+  const estimateNote = useEstimateNote();
+  const localName = useLocalName();
   const ids = sim.items.map((i) => i.offerId).join(",");
 
   const { data: estimates, loading } = useAsync(async () => {
@@ -70,7 +72,11 @@ export default function Plan() {
         {groups.map(([cat, items]) => (
           <div key={cat} className="rounded-xl border border-taupe-100 bg-white">
             <div className="border-b border-taupe-100 bg-cream-100 px-4 py-2 text-sm font-semibold text-taupe-500">
-              {items[0].categoryIcon} {cat}
+              {items[0].categoryIcon}{" "}
+              {localName({
+                name: cat,
+                name_mk: items[0].categoryNameMk,
+              })}
             </div>
             <ul>
               {items.map((item) => {
@@ -89,18 +95,23 @@ export default function Plan() {
                         to={`/vendors/${item.vendorSlug}`}
                         className="font-medium hover:text-olive-400"
                       >
-                        {item.offerName}
+                        {localName({
+                          name: item.offerName,
+                          name_mk: item.offerNameMk,
+                        })}
                       </Link>
                       <p className="text-sm text-taupe-400">{item.vendorName}</p>
                       {est?.min_guest_applied && (
-                        <p className="text-xs text-blush-400">{est.note}</p>
+                        <p className="text-xs text-blush-400">
+                          {estimateNote(est)}
+                        </p>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-semibold">
                         {val !== null
                           ? formatMoney(val, sim.currency)
-                          : (est?.note ?? "…")}
+                          : estimateNote(est) || "…"}
                       </span>
                       <button
                         onClick={() => sim.removeOffer(item.offerId)}

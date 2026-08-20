@@ -1,7 +1,7 @@
 import type { Currency } from "../api/types";
 
 // MKD is de-facto pegged to EUR; this is the reference rate. In production
-// this would come from the National Bank of North Macedonia via a scheduled
+// this would come from the National Bank of Macedonia via a scheduled
 // job (see docs Phase 6.2). Kept as one constant for the demo.
 export const MKD_PER_EUR = 61.5;
 
