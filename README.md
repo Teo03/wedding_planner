@@ -12,6 +12,8 @@ The interface is **Macedonian by default**, with English behind a toggle.
 
 > This is a demo project. `.env` ships with dev-only credentials.
 
+**Live:** https://ca-wedding-planner.greenwave-e2536466.polandcentral.azurecontainerapps.io
+
 ---
 
 ## Quick start
@@ -178,6 +180,36 @@ every pricing path — but no longer runs at boot.
         ├── i18n/          # MK/EN dictionaries and the translation hooks
         └── pages/         # Home, Vendors, CategoryBrowse, VendorDetail, Plan
 ```
+
+---
+
+## Deploying to Azure
+
+Two paths are scripted; the live one is Container Apps.
+
+```bash
+./deploy/azure-containerapps.sh        # the live deployment
+./deploy/azure-appservice.sh <name>    # alternative, fully free
+```
+
+**Both build the image or the dependencies locally and never on Azure.** That is
+not a preference, it is a constraint: App Service Free (F1) allows 60
+CPU-minutes per day, and one on-instance `pip install` of Django + Pillow +
+psycopg consumes the entire allowance, after which the platform parks the app in
+`QuotaExceeded`. The allowance is tracked per subscription *per region*, so
+recreating the plan does not reset it -- only waiting for UTC midnight does.
+
+| | Container Apps (live) | App Service F1 |
+|---|---|---|
+| Compute | Free monthly grant, scale-to-zero | Free, 60 CPU-min/day |
+| Database | SQLite on an Azure Files share | SQLite on the `/home` share |
+| Persists across restarts | Yes | Yes |
+| Cost | ~a few cents/month for the share | £0 |
+| Build happens | Locally, image pushed to GHCR | Locally, deps vendored into the zip |
+
+Gunicorn runs a **single worker** on Container Apps: SQLite over SMB can
+deadlock with concurrent writers, and WAL mode -- the usual answer -- needs
+shared memory that a network filesystem cannot provide.
 
 ---
 

@@ -21,6 +21,9 @@ out/
 npm-debug.log*
 pnpm-debug.log*
 
+# Azure deploy: dependencies vendored at package time, never committed
+backend/.python_packages/
+
 # Env / editor
 .DS_Store
 .idea/

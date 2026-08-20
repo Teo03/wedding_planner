@@ -17,9 +17,14 @@ if [ -n "${DJANGO_SUPERUSER_USERNAME}" ]; then
   python manage.py createsuperuser --noinput 2>/dev/null || true
 fi
 
+# Worker count is configurable because the database is SQLite: when the file
+# lives on an Azure Files (SMB) share, concurrent writers can trip "database is
+# locked", and WAL mode -- the usual fix -- needs shared memory that a network
+# filesystem cannot provide. Run a single worker when mounted on Azure Files;
+# the default of 2 is fine on a local disk.
 exec gunicorn config.wsgi \
   --bind 0.0.0.0:8000 \
-  --workers 2 \
+  --workers "${GUNICORN_WORKERS:-2}" \
   --timeout 120 \
   --access-logfile - \
   --error-logfile -
