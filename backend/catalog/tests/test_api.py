@@ -1,6 +1,8 @@
 import pytest
+from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from catalog.models import Offer
 
@@ -13,8 +15,27 @@ def seeded(db):
 
 
 @pytest.fixture
-def api():
+def api(db):
+    user = get_user_model().objects.create_user(
+        username="api-user",
+        email="api-user@example.com",
+        password="SufficientlyStrongPassword123",
+    )
+    token = RefreshToken.for_user(user)
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {token.access_token}")
+    return client
+
+
+@pytest.fixture
+def anonymous_api():
     return APIClient()
+
+
+@pytest.mark.django_db
+def test_catalog_endpoints_require_jwt(anonymous_api):
+    resp = anonymous_api.get("/api/vendors/")
+    assert resp.status_code == 401
 
 
 @pytest.mark.django_db

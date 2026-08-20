@@ -1,4 +1,5 @@
 import type {
+  AuthResponse,
   Category,
   Estimate,
   Location,
@@ -6,6 +7,7 @@ import type {
   Paginated,
   VendorDetail,
   VendorListItem,
+  User,
 } from "./types";
 
 const BASE: string =
@@ -23,14 +25,89 @@ async function get<T>(path: string, params?: Params): Promise<T> {
       }
     }
   }
-  const res = await fetch(url.toString());
+  return request<T>(url.toString(), {}, path);
+}
+
+async function post<T>(path: string, body: unknown): Promise<T> {
+  return request<T>(
+    BASE + path,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+    path,
+    !path.startsWith("/auth/"),
+  );
+}
+
+async function request<T>(
+  url: string,
+  init: RequestInit,
+  path: string,
+  retryAuth = true,
+): Promise<T> {
+  const res = await fetch(url, { ...init, credentials: "include" });
+  if (res.status === 401 && retryAuth) {
+    try {
+      await refreshAccess();
+      return request<T>(url, init, path, false);
+    } catch {
+      await logout();
+    }
+  }
   if (!res.ok) {
-    throw new Error(`${res.status} ${res.statusText} for ${path}`);
+    const detail = await readError(res);
+    throw new Error(detail || `${res.status} ${res.statusText} for ${path}`);
   }
   return res.json() as Promise<T>;
 }
 
+async function refreshAccess() {
+  const res = await fetch(BASE + "/auth/refresh/", {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const detail = await readError(res);
+    throw new Error(detail || "Could not refresh session.");
+  }
+  return res.json() as Promise<{ detail: string }>;
+}
+
+async function logout() {
+  await fetch(BASE + "/auth/logout/", {
+    method: "POST",
+    credentials: "include",
+  });
+}
+
+async function readError(res: Response) {
+  try {
+    const body = (await res.json()) as Record<string, unknown>;
+    if (typeof body.detail === "string") return body.detail;
+    if (typeof body.username === "object") return "Username is already taken.";
+    if (typeof body.email === "object") return "Email is already registered.";
+    if (typeof body.password === "object") return "Password does not meet requirements.";
+  } catch {
+    // Fall through to the generic HTTP error.
+  }
+  return "";
+}
+
 export const api = {
+  login: (username: string, password: string) =>
+    post<AuthResponse>("/auth/login/", { username, password }),
+  register: (data: {
+    username: string;
+    email: string;
+    password: string;
+    first_name?: string;
+    last_name?: string;
+  }) => post<AuthResponse>("/auth/register/", data),
+  refresh: refreshAccess,
+  logout,
+  me: () => get<User>("/auth/me/"),
   categories: () => get<Category[]>("/categories/"),
   category: (slug: string) => get<Category>(`/categories/${slug}/`),
   locations: () => get<Location[]>("/locations/"),

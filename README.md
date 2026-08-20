@@ -60,6 +60,11 @@ pricing:
 Exposed at `GET /api/offers/{id}/estimate/?guests=120`.
 
 ### API highlights
+- `POST /api/auth/register/` — create a user and set HTTP-only JWT cookies
+- `POST /api/auth/login/` — sign in and set HTTP-only JWT cookies
+- `POST /api/auth/refresh/` — refresh the HTTP-only access-token cookie
+- `POST /api/auth/logout/` — clear auth cookies
+- `GET /api/auth/me/` — current authenticated user
 - `GET /api/categories/` — the category tree (top-level with nested children)
 - `GET /api/vendors/?category=venues&city=ohrid&max_price=1000&search=lakeside`
   — filter by category (top-level slug matches all its subcategories), city,

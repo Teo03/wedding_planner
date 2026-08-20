@@ -1,8 +1,10 @@
 import { Link, NavLink } from "react-router-dom";
 import type { ReactNode } from "react";
+import { useAuth } from "../context/AuthContext";
 import { useSimulator } from "../context/SimulatorContext";
 
 export default function Layout({ children }: { children: ReactNode }) {
+  const auth = useAuth();
   const sim = useSimulator();
   return (
     <div className="flex min-h-full flex-col bg-stone-50 text-stone-800">
@@ -45,6 +47,26 @@ export default function Layout({ children }: { children: ReactNode }) {
                 </span>
               )}
             </Link>
+            {auth.user ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden max-w-32 truncate text-sm text-stone-600 md:inline">
+                  {auth.user.first_name || auth.user.username}
+                </span>
+                <button
+                  onClick={auth.logout}
+                  className="rounded border border-stone-300 px-2 py-1 text-sm font-medium hover:bg-stone-100"
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="rounded border border-stone-300 px-2 py-1 text-sm font-medium hover:bg-stone-100"
+              >
+                Sign in
+              </Link>
+            )}
           </div>
         </div>
       </header>
