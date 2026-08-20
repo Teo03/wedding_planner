@@ -1,5 +1,5 @@
 import django_filters as df
-from django.contrib.postgres.search import SearchQuery, SearchVector
+from django.db import connection
 from django.db.models import DecimalField, Min, Q
 from django.db.models.functions import Coalesce
 
@@ -45,7 +45,15 @@ class VendorFilter(df.FilterSet):
         return self._annotate_from_price(qs).filter(_from_price__lte=value)
 
     def filter_search(self, qs, name, value):
-        # PostgreSQL full-text search over name + description.
-        return qs.annotate(
-            _search=SearchVector("name", "description")
-        ).filter(_search=SearchQuery(value))
+        # PostgreSQL full-text search over name + description when available;
+        # fall back to a case-insensitive substring match on other backends
+        # (e.g. SQLite), which have no SearchVector/SearchQuery support.
+        if connection.vendor == "postgresql":
+            from django.contrib.postgres.search import SearchQuery, SearchVector
+
+            return qs.annotate(
+                _search=SearchVector("name", "description")
+            ).filter(_search=SearchQuery(value))
+        return qs.filter(
+            Q(name__icontains=value) | Q(description__icontains=value)
+        )
