@@ -80,6 +80,7 @@ def serialize_category_summary(category):
         "slug": category.slug,
         "layout_hint": category.layout_hint,
         "icon": category.icon,
+        "audience": category.audience,
         "display_order": category.display_order,
     }
 
@@ -92,6 +93,7 @@ def serialize_category(category):
         "parent": category.parent_id,
         "layout_hint": category.layout_hint,
         "icon": category.icon,
+        "audience": category.audience,
         "description": category.description,
         "display_order": category.display_order,
         "children": [

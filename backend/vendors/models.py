@@ -23,6 +23,14 @@ class Vendor(TimeStampedModel):
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.ACTIVE
     )
+    address = models.CharField(max_length=255, blank=True)
+    # Snapshot of the vendor's Google Places rating at seed time. Kept separate
+    # from in-app Review aggregates: this is third-party data we don't own and
+    # can't recompute, and per the seed sheet's notes it goes stale quickly.
+    google_rating = models.DecimalField(
+        max_digits=2, decimal_places=1, null=True, blank=True
+    )
+    google_review_count = models.PositiveIntegerField(null=True, blank=True)
     location = models.ForeignKey(
         "locations.Location",
         null=True,

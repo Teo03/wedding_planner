@@ -11,7 +11,7 @@ mkdir -p /home/data /home/data/media
 python manage.py migrate --noinput
 python manage.py seed_taxonomy
 python manage.py seed_locations
-python manage.py seed_demo
+python manage.py seed_catalog --flush-demo
 
 # Create the admin user if credentials are configured (idempotent).
 if [ -n "${DJANGO_SUPERUSER_USERNAME}" ]; then

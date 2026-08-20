@@ -8,6 +8,7 @@ from django.urls import path
 from accounts.auth import jwt_required
 from catalog import views as catalog_views
 from locations import views as location_views
+from reviews import views as review_views
 from vendors import views as vendor_views
 
 
@@ -18,6 +19,7 @@ def api_root(request):
             "categories": request.build_absolute_uri("categories/"),
             "offers": request.build_absolute_uri("offers/"),
             "locations": request.build_absolute_uri("locations/"),
+            "reviews": request.build_absolute_uri("vendors/<slug>/reviews/"),
             "regions": request.build_absolute_uri("regions/"),
         }
     )
@@ -30,6 +32,11 @@ urlpatterns = [
         "vendors/<slug:slug>/",
         jwt_required(vendor_views.vendor_detail),
         name="vendor-detail",
+    ),
+    path(
+        "vendors/<slug:slug>/reviews/",
+        review_views.VendorReviewsView.as_view(),
+        name="vendor-reviews",
     ),
     path("categories/", jwt_required(catalog_views.category_list), name="category-list"),
     path(

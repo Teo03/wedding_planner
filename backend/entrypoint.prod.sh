@@ -11,7 +11,7 @@ mkdir -p "$(dirname "$DB_PATH")"
 python manage.py migrate --noinput
 python manage.py seed_taxonomy
 python manage.py seed_locations
-python manage.py seed_demo
+python manage.py seed_catalog --flush-demo
 
 if [ -n "${DJANGO_SUPERUSER_USERNAME}" ]; then
   python manage.py createsuperuser --noinput 2>/dev/null || true

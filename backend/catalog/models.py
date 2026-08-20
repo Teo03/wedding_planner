@@ -10,6 +10,11 @@ class Category(models.Model):
         VENUE = "venue", "Venue-like (capacity & location matter)"
         SERVICE = "service", "Service-like (portfolio & media matter)"
 
+    class Audience(models.TextChoices):
+        COUPLE = "couple", "Both / the couple"
+        BRIDE = "bride", "Bride"
+        GROOM = "groom", "Groom"
+
     name = models.CharField(max_length=120)
     slug = models.SlugField(max_length=140, unique=True)
     parent = models.ForeignKey(
@@ -24,6 +29,12 @@ class Category(models.Model):
     )
     icon = models.CharField(max_length=40, blank=True)
     description = models.CharField(max_length=255, blank=True)
+    audience = models.CharField(
+        max_length=10,
+        choices=Audience.choices,
+        default=Audience.COUPLE,
+        help_text="Drives the Bride/Groom quick filters.",
+    )
     display_order = models.PositiveIntegerField(default=0)
 
     class Meta:

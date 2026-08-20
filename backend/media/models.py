@@ -32,6 +32,9 @@ class Media(TimeStampedModel):
         blank=True, help_text="For video or externally hosted media."
     )
     caption = models.CharField(max_length=255, blank=True)
+    # Attribution for externally licensed imagery (CC-BY / CC-BY-SA require it).
+    credit = models.CharField(max_length=255, blank=True)
+    credit_url = models.URLField(max_length=500, blank=True)
     display_order = models.PositiveIntegerField(default=0)
     is_cover_photo = models.BooleanField(default=False)
 

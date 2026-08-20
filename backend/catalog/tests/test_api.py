@@ -125,6 +125,11 @@ def test_vendor_with_no_offers_still_serializes(seeded, api):
 def test_category_tree_endpoint(seeded, api):
     resp = api.get("/api/categories/")
     data = resp.json()
-    assert len(data) == 14  # top-level categories
+    assert len(data) == 15  # top-level categories
     venues = next(c for c in data if c["slug"] == "venues")
     assert len(venues["children"]) == 5
+    # Subcategories carry the audience that drives the Bride/Groom filters.
+    attire = next(c for c in data if c["slug"] == "attire")
+    audiences = {child["name"]: child["audience"] for child in attire["children"]}
+    assert audiences["Wedding Dress Shops"] == "bride"
+    assert audiences["Suit/Tux Rental & Menswear"] == "groom"
