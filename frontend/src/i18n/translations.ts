@@ -157,6 +157,20 @@ export const en = {
     createFailed: "Could not create the account.",
     newHere: "New here?",
     createAccount: "Create an account",
+    errors: {
+      usernameRequired: "Username is required.",
+      emailRequired: "Email is required.",
+      emailInvalid: "Enter a valid email address.",
+      passwordRequired: "Password is required.",
+      usernameTaken: "Username is already taken.",
+      emailRegistered: "Email is already registered.",
+      passwordRequirements: "Password does not meet requirements: {errors}",
+      passwordTooShort:
+        "This password is too short. It must contain at least {minLength} characters.",
+      passwordTooCommon: "This password is too common.",
+      passwordEntirelyNumeric: "This password is entirely numeric.",
+      passwordTooSimilar: "This password is too similar to your account details.",
+    },
   },
 
   footer: "Wedding vendor catalog · Macedonia",
@@ -309,6 +323,21 @@ export const mk: DeepPartial<typeof en> = {
     createFailed: "Сметката не е креирана.",
     newHere: "Немате сметка?",
     createAccount: "Креирајте сметка",
+    errors: {
+      usernameRequired: "Внесете корисничко име.",
+      emailRequired: "Внесете е-пошта.",
+      emailInvalid: "Внесете валидна е-пошта.",
+      passwordRequired: "Внесете лозинка.",
+      usernameTaken: "Корисничкото име е веќе зафатено.",
+      emailRegistered: "Е-поштата е веќе регистрирана.",
+      passwordRequirements: "Лозинката не ги исполнува условите: {errors}",
+      passwordTooShort:
+        "Лозинката е прекратка. Мора да содржи најмалку {minLength} знаци.",
+      passwordTooCommon: "Лозинката е премногу честа.",
+      passwordEntirelyNumeric: "Лозинката е составена само од бројки.",
+      passwordTooSimilar:
+        "Лозинката е премногу слична на податоците од вашата сметка.",
+    },
   },
 
   footer: "Каталог на свадбени понудувачи · Македонија",

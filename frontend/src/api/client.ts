@@ -18,6 +18,21 @@ const BASE: string =
   "http://localhost:8000/api";
 
 type Params = Record<string, string | number | undefined | null>;
+type ErrorBody = Record<string, unknown> | null;
+
+export class ApiError extends Error {
+  body: ErrorBody;
+  status: number;
+  path: string;
+
+  constructor(message: string, status: number, path: string, body: ErrorBody) {
+    super(message);
+    this.name = "ApiError";
+    this.body = body;
+    this.status = status;
+    this.path = path;
+  }
+}
 
 async function get<T>(path: string, params?: Params): Promise<T> {
   // Resolve against the page origin so a relative BASE (e.g. "/api", used when
@@ -69,8 +84,13 @@ async function request<T>(
     }
   }
   if (!res.ok) {
-    const detail = await readError(res);
-    throw new Error(detail || `${res.status} ${res.statusText} for ${path}`);
+    const error = await readError(res);
+    throw new ApiError(
+      error.message || `${res.status} ${res.statusText} for ${path}`,
+      res.status,
+      path,
+      error.body,
+    );
   }
   return res.json() as Promise<T>;
 }
@@ -81,8 +101,13 @@ async function refreshAccess() {
     credentials: "include",
   });
   if (!res.ok) {
-    const detail = await readError(res);
-    throw new Error(detail || "Could not refresh session.");
+    const error = await readError(res);
+    throw new ApiError(
+      error.message || "Could not refresh session.",
+      res.status,
+      "/auth/refresh/",
+      error.body,
+    );
   }
   return res.json() as Promise<{ detail: string }>;
 }
@@ -97,15 +122,26 @@ async function logout() {
 async function readError(res: Response) {
   try {
     const body = (await res.json()) as Record<string, unknown>;
-    if (typeof body.detail === "string") return body.detail;
-    if (typeof body.username === "object") return "Username is already taken.";
-    if (typeof body.email === "object") return "Email is already registered.";
+    if (typeof body.detail === "string") {
+      return { message: body.detail, body };
+    }
+    if (typeof body.username === "object") {
+      return { message: "Username is already taken.", body };
+    }
+    if (typeof body.email === "object") {
+      return { message: "Email is already registered.", body };
+    }
     const passwordErrors = formatFieldErrors(body.password);
-    if (passwordErrors) return `Password does not meet requirements: ${passwordErrors}`;
+    if (passwordErrors) {
+      return {
+        message: `Password does not meet requirements: ${passwordErrors}`,
+        body,
+      };
+    }
   } catch {
     // Fall through to the generic HTTP error.
   }
-  return "";
+  return { message: "", body: null };
 }
 
 function formatFieldErrors(value: unknown): string {
