@@ -1,4 +1,5 @@
 """Django settings for the Wedding Vendor Catalog backend."""
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -152,6 +153,17 @@ SPECTACULAR_SETTINGS = {
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"]
 )
+# Sign-in longevity. Left unset, simple_jwt expires the refresh token after a
+# single day, so couples planning over weeks were being signed out constantly.
+# The access token stays short because the frontend refreshes it transparently
+# on a 401; the refresh token is what actually keeps someone signed in.
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=env.int("JWT_ACCESS_MINUTES", default=30)
+    ),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=env.int("JWT_REFRESH_DAYS", default=14)),
+}
+
 CORS_ALLOW_CREDENTIALS = True
 JWT_COOKIE_SECURE = env.bool("JWT_COOKIE_SECURE", default=not DEBUG)
 JWT_COOKIE_SAMESITE = env("JWT_COOKIE_SAMESITE", default="Lax")

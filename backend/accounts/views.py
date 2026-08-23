@@ -4,6 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.settings import api_settings as simple_jwt_settings
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -86,9 +87,22 @@ class LogoutView(APIView):
 
 
 def response_with_auth_cookies(response, access, refresh):
+    """Attach the auth cookies, each living exactly as long as its token.
+
+    max_age matters: without it these are session cookies, which the browser
+    discards when it closes -- so anyone who quit the tab came back signed out
+    even though their refresh token was still perfectly valid.
+    """
+    access_max_age = int(
+        simple_jwt_settings.ACCESS_TOKEN_LIFETIME.total_seconds()
+    )
+    refresh_max_age = int(
+        simple_jwt_settings.REFRESH_TOKEN_LIFETIME.total_seconds()
+    )
     response.set_cookie(
         ACCESS_COOKIE,
         access,
+        max_age=access_max_age,
         httponly=True,
         secure=settings.JWT_COOKIE_SECURE,
         samesite=settings.JWT_COOKIE_SAMESITE,
@@ -97,6 +111,7 @@ def response_with_auth_cookies(response, access, refresh):
     response.set_cookie(
         REFRESH_COOKIE,
         refresh,
+        max_age=refresh_max_age,
         httponly=True,
         secure=settings.JWT_COOKIE_SECURE,
         samesite=settings.JWT_COOKIE_SAMESITE,

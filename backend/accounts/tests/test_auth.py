@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -190,3 +192,47 @@ def test_invalid_bearer_header_still_errors():
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {STALE_TOKEN}")
     assert client.get("/api/vendors/").status_code == 401
+
+
+# -- staying signed in ------------------------------------------------------
+#
+# The auth cookies originally carried no max_age, which makes them session
+# cookies: the browser drops them when it closes, so people came back signed
+# out while their refresh token was still valid.
+
+
+@pytest.mark.django_db
+def test_auth_cookies_outlive_the_browser_session(api):
+    response = api.post(
+        "/api/auth/register/",
+        {
+            "username": "staysignedin",
+            "email": "staysignedin@example.com",
+            "password": "SufficientlyStrongPassword123",
+        },
+        format="json",
+    )
+    assert response.status_code == 201
+    for name in ("access_token", "refresh_token"):
+        cookie = response.cookies[name]
+        assert cookie["max-age"], f"{name} is a session cookie"
+        assert int(cookie["max-age"]) > 0
+
+
+@pytest.mark.django_db
+def test_refresh_token_lasts_well_beyond_a_day(api):
+    """simple_jwt's default is one day, which signed people out constantly."""
+    from rest_framework_simplejwt.settings import api_settings
+
+    assert api_settings.REFRESH_TOKEN_LIFETIME >= timedelta(days=7)
+    response = api.post(
+        "/api/auth/register/",
+        {
+            "username": "longlived",
+            "email": "longlived@example.com",
+            "password": "SufficientlyStrongPassword123",
+        },
+        format="json",
+    )
+    refresh_max_age = int(response.cookies["refresh_token"]["max-age"])
+    assert refresh_max_age >= 7 * 24 * 3600
