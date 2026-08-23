@@ -1,5 +1,6 @@
 import pytest
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 @pytest.fixture
@@ -104,3 +105,88 @@ def test_me_requires_authentication(api):
     resp = api.get("/api/auth/me/")
 
     assert resp.status_code == 401
+
+
+# -- stale cookie lockout ---------------------------------------------------
+#
+# DRF authenticates before it checks permissions, so an unusable cookie used to
+# 401 every request -- including register and login, which are AllowAny. Anyone
+# holding an expired cookie, or one for a deleted user, was locked out with no
+# way to recover except clearing cookies by hand.
+
+STALE_TOKEN = (
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+    "eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzAwMDAwMDAwLCJ1c2VyX2lkIjo5OTk5fQ."
+    "invalidsignature"
+)
+
+
+@pytest.mark.django_db
+def test_register_works_despite_a_stale_access_cookie():
+    client = APIClient()
+    client.cookies["access_token"] = STALE_TOKEN
+    response = client.post(
+        "/api/auth/register/",
+        {
+            "username": "recovering",
+            "email": "recovering@example.com",
+            "password": "SufficientlyStrongPassword123",
+        },
+        format="json",
+    )
+    assert response.status_code == 201, response.data
+
+
+@pytest.mark.django_db
+def test_login_works_despite_a_stale_access_cookie(django_user_model):
+    django_user_model.objects.create_user(
+        username="returning",
+        email="returning@example.com",
+        password="SufficientlyStrongPassword123",
+    )
+    client = APIClient()
+    client.cookies["access_token"] = STALE_TOKEN
+    response = client.post(
+        "/api/auth/login/",
+        {"username": "returning", "password": "SufficientlyStrongPassword123"},
+        format="json",
+    )
+    assert response.status_code == 200, response.data
+
+
+@pytest.mark.django_db
+def test_cookie_for_a_deleted_user_is_treated_as_signed_out(django_user_model):
+    """The exact production failure: the database was reset, the cookie wasn't."""
+    user = django_user_model.objects.create_user(
+        username="vanished",
+        email="vanished@example.com",
+        password="SufficientlyStrongPassword123",
+    )
+    token = str(RefreshToken.for_user(user).access_token)
+    user.delete()
+
+    client = APIClient()
+    client.cookies["access_token"] = token
+    # Protected routes say "not signed in" ...
+    assert client.get("/api/vendors/").status_code == 401
+    # ... but the user can still create a new account to recover.
+    assert (
+        client.post(
+            "/api/auth/register/",
+            {
+                "username": "vanished2",
+                "email": "vanished2@example.com",
+                "password": "SufficientlyStrongPassword123",
+            },
+            format="json",
+        ).status_code
+        == 201
+    )
+
+
+@pytest.mark.django_db
+def test_invalid_bearer_header_still_errors():
+    """A bad token sent explicitly is a caller mistake and should surface."""
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {STALE_TOKEN}")
+    assert client.get("/api/vendors/").status_code == 401

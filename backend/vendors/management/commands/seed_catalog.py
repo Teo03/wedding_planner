@@ -9,10 +9,12 @@ doesn't carry them:
   * Offers/prices. The sheet has no pricing, but the plan list and estimator
     need something to price. Offers are generated per subcategory from the
     templates below, deterministically per vendor slug so re-runs are stable.
-  * Cover photos. Vendor-owned photos couldn't be licensed for this demo (see
-    the sheet's own "ON PHOTOS" note), so each vendor gets a licensed image
-    matched to its subcategory, or a real photo of the actual place for the
-    landmark venues. Attribution rides along on the Media row.
+  * Cover photos. Where the team has supplied a vendor's own photo it is used
+    (seed_data/vendor_photos/<slug>.jpg). For everyone else, vendor-owned
+    photos couldn't be licensed for this demo -- see the sheet's own
+    "ON PHOTOS" note -- so they get a licensed image matched to their
+    subcategory, or a real photo of the actual place for the landmark venues.
+    Attribution rides along on the Media row for the licensed ones.
 
 Google ratings ARE real, copied straight from the sheet's snapshot columns.
 """
@@ -37,6 +39,7 @@ from catalog.management.commands._mk_names import (
 from vendors.models import Contact, Vendor
 
 SEED_DIR = Path(settings.BASE_DIR) / "seed_data"
+VENDOR_PHOTO_DIR = SEED_DIR / "vendor_photos"
 
 # Sheet subcategory -> (top-level taxonomy name, taxonomy subcategory name).
 CATEGORY_MAP = {
@@ -243,7 +246,10 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f"Catalog seeded from sheet: {created} created, {updated} updated, "
-                f"{skipped} skipped. {Vendor.objects.count()} vendors total, "
+                f"{skipped} skipped. "
+                f"{len(list(VENDOR_PHOTO_DIR.glob('*.jpg'))) if VENDOR_PHOTO_DIR.exists() else 0}"
+                f" vendor-supplied photos. "
+                f"{Vendor.objects.count()} vendors total, "
                 f"{Offer.objects.count()} offers, "
                 f"{Vendor.objects.exclude(google_rating=None).count()} with Google ratings."
             )
@@ -304,17 +310,28 @@ class Command(BaseCommand):
         )
 
     def attach_media(self, vendor, sub, manifest):
-        theme = PLACE_PHOTOS.get(vendor.slug) or THEME_MAP.get(sub)
-        entry = manifest.get(theme)
-        if not entry:
-            return
-        source = SEED_DIR / "media" / entry["file"]
+        # A vendor's own photo always wins over the category stand-in.
+        own = VENDOR_PHOTO_DIR / f"{vendor.slug}.jpg"
+        if own.exists():
+            entry = {"file": f"own-{vendor.slug}.jpg", "credit": "", "credit_url": ""}
+            source = own
+        else:
+            theme = PLACE_PHOTOS.get(vendor.slug) or THEME_MAP.get(sub)
+            entry = manifest.get(theme)
+            if not entry:
+                return
+            source = SEED_DIR / "media" / entry["file"]
         if not source.exists():
             return
         target_rel = f"vendors/{entry['file']}"
         target_abs = Path(settings.MEDIA_ROOT) / target_rel
         target_abs.parent.mkdir(parents=True, exist_ok=True)
-        if not target_abs.exists():
+        # Re-copy when the source is newer, so refreshed photos actually land
+        # on a deploy that reuses a persistent media directory.
+        if (
+            not target_abs.exists()
+            or source.stat().st_mtime > target_abs.stat().st_mtime
+        ):
             shutil.copyfile(source, target_abs)
         Media.objects.update_or_create(
             vendor=vendor,

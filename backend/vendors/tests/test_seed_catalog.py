@@ -65,3 +65,32 @@ def test_generated_prices_are_stable_across_reseeds(imported):
     call_command("seed_catalog")
     offer.refresh_from_db()
     assert offer.price_amount == original
+
+
+@pytest.mark.django_db
+def test_vendor_supplied_photo_wins_over_the_category_standin(imported):
+    """A real photo of the business should never be replaced by a stock one."""
+    from vendors.management.commands.seed_catalog import VENDOR_PHOTO_DIR
+
+    supplied = {p.stem for p in VENDOR_PHOTO_DIR.glob("*.jpg")}
+    assert supplied, "expected vendor-supplied photos in seed_data/vendor_photos"
+
+    for slug in sorted(supplied):
+        vendor = Vendor.objects.filter(slug=slug).first()
+        # Every supplied photo must belong to a vendor that actually exists,
+        # otherwise the filename-to-slug mapping has drifted.
+        assert vendor is not None, f"no vendor for supplied photo {slug}.jpg"
+        cover = vendor.media.filter(is_cover_photo=True).first()
+        assert cover is not None
+        assert cover.image.name == f"vendors/own-{slug}.jpg"
+        # Their own photo needs no third-party attribution.
+        assert cover.credit == ""
+
+
+@pytest.mark.django_db
+def test_vendors_without_a_supplied_photo_still_get_one(imported):
+    from vendors.management.commands.seed_catalog import VENDOR_PHOTO_DIR
+
+    supplied = {p.stem for p in VENDOR_PHOTO_DIR.glob("*.jpg")}
+    other = Vendor.objects.exclude(slug__in=supplied).first()
+    assert other.media.filter(is_cover_photo=True).exists()
