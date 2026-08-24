@@ -6,6 +6,7 @@ import VendorFilters, {
   EMPTY_FILTERS,
   type FilterState,
 } from "../components/VendorFilters";
+import PaginationControls from "../components/PaginationControls";
 import { useI18n } from "../i18n";
 
 /** Browse the whole catalog, filtered by category, audience, city, price and rating. */
@@ -78,27 +79,7 @@ export default function Vendors() {
             ))}
           </div>
 
-          {pages > 1 && (
-            <div className="flex items-center justify-center gap-4 pt-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="rounded-md border border-taupe-100 bg-white px-3 py-1.5 text-sm disabled:opacity-40"
-              >
-                {t("browse.prev")}
-              </button>
-              <span className="text-sm text-taupe-400">
-                {t("browse.page", { page, pages })}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(pages, p + 1))}
-                disabled={page >= pages}
-                className="rounded-md border border-taupe-100 bg-white px-3 py-1.5 text-sm disabled:opacity-40"
-              >
-                {t("browse.next")}
-              </button>
-            </div>
-          )}
+          <PaginationControls page={page} pages={pages} onPageChange={setPage} />
         </>
       ) : (
         <div className="py-12 text-center">

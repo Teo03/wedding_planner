@@ -5,6 +5,7 @@ these are the only write endpoints outside `accounts`, and the auth cookie is
 a cookie, so they need DRF's authentication handling instead of Django's
 session-oriented CSRF middleware -- same reason accounts/ is built this way.
 """
+from django.core.paginator import Paginator
 from django.db.models import Avg, Count
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -24,11 +25,25 @@ class VendorReviewsView(APIView):
     def get(self, request, slug):
         vendor = get_object_or_404(Vendor, slug=slug)
         reviews = vendor.reviews.select_related("author")
+        paginator = Paginator(reviews, 12)
+        page = paginator.get_page(request.GET.get("page") or 1)
+        current_user_review = reviews.filter(author=request.user).first()
         return Response(
             {
-                "count": reviews.count(),
+                "count": paginator.count,
+                "next": (
+                    page_url(request, page.next_page_number()) if page.has_next() else None
+                ),
+                "previous": (
+                    page_url(request, page.previous_page_number())
+                    if page.has_previous()
+                    else None
+                ),
                 "summary": rating_summary(vendor),
-                "results": [serialize_review(review) for review in reviews],
+                "current_user_review": (
+                    serialize_review(current_user_review) if current_user_review else None
+                ),
+                "results": [serialize_review(review) for review in page.object_list],
             }
         )
 
@@ -101,3 +116,9 @@ def serialize_review(review):
         "created_at": review.created_at.isoformat(),
         "updated_at": review.updated_at.isoformat(),
     }
+
+
+def page_url(request, page_number):
+    params = request.GET.copy()
+    params["page"] = page_number
+    return request.build_absolute_uri(f"{request.path}?{params.urlencode()}")

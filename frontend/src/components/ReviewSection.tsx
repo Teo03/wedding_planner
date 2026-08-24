@@ -3,6 +3,7 @@ import { api } from "../api/client";
 import type { RatingSummary, Review } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../i18n";
+import PaginationControls from "./PaginationControls";
 import Stars from "./Stars";
 
 export default function ReviewSection({ vendorSlug }: { vendorSlug: string }) {
@@ -10,34 +11,50 @@ export default function ReviewSection({ vendorSlug }: { vendorSlug: string }) {
   const auth = useAuth();
   const [summary, setSummary] = useState<RatingSummary | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [mine, setMine] = useState<Review | null>(null);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [editingMine, setEditingMine] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api.reviews(vendorSlug);
+      const data = await api.reviews(vendorSlug, { page });
       setSummary(data.summary);
       setReviews(data.results);
+      setReviewCount(data.count);
+      setMine(data.current_user_review);
     } finally {
       setLoading(false);
     }
-  }, [vendorSlug]);
+  }, [vendorSlug, page]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const mine = reviews.find((review) => review.author_id === auth.user?.id);
   const showForm = !mine || editingMine;
+  const mineVisible = mine
+    ? reviews.some((review) => review.id === mine.id)
+    : false;
+  const pages = Math.max(1, Math.ceil(reviewCount / 12));
 
   const handleSaved = async () => {
-    await load();
+    if (page === 1) {
+      await load();
+    } else {
+      setPage(1);
+    }
     setEditingMine(false);
   };
 
   const handleDeleted = async () => {
-    await load();
+    if (page === 1) {
+      await load();
+    } else {
+      setPage(1);
+    }
     setEditingMine(false);
   };
 
@@ -53,7 +70,7 @@ export default function ReviewSection({ vendorSlug }: { vendorSlug: string }) {
       {showForm && (
         <ReviewForm
           vendorSlug={vendorSlug}
-          existing={mine}
+          existing={mine ?? undefined}
           onSaved={handleSaved}
           onDeleted={handleDeleted}
           onCancel={mine ? () => setEditingMine(false) : undefined}
@@ -65,46 +82,74 @@ export default function ReviewSection({ vendorSlug }: { vendorSlug: string }) {
         {!loading && reviews.length === 0 && (
           <p className="text-sm text-taupe-300">{t("rating.noReviews")}</p>
         )}
+        {mine && !mineVisible && !showForm && (
+          <ReviewArticle
+            review={mine}
+            isMine
+            editingMine={editingMine}
+            onEditMine={() => setEditingMine(true)}
+          />
+        )}
         {reviews.map((review) => (
-          <article
+          <ReviewArticle
             key={review.id}
-            className="border-t border-taupe-100 pt-4 first:border-0 first:pt-0"
-          >
-            <div className="flex items-center gap-2">
-              <Stars value={review.rating} size={14} />
-              <span className="text-sm font-medium text-forest-600">
-                {review.author}
-              </span>
-              {review.author_id === auth.user?.id && (
-                <>
-                  <span className="rounded-full bg-blush-100 px-2 py-0.5 text-xs text-blush-400">
-                    {t("rating.yourReview")}
-                  </span>
-                  {!editingMine && (
-                    <button
-                      type="button"
-                      onClick={() => setEditingMine(true)}
-                      className="rounded-md border border-olive-300 bg-olive-100 px-2.5 py-1 text-xs font-medium text-forest-600 hover:bg-olive-200"
-                    >
-                      {t("rating.editReview")}
-                    </button>
-                  )}
-                </>
-              )}
-              <span className="ml-auto text-xs text-taupe-300">
-                {new Date(review.created_at).toLocaleDateString()}
-              </span>
-            </div>
-            {review.title && (
-              <h3 className="mt-1 font-medium text-forest-600">{review.title}</h3>
-            )}
-            {review.body && (
-              <p className="mt-1 text-sm text-taupe-500">{review.body}</p>
-            )}
-          </article>
+            review={review}
+            isMine={review.author_id === auth.user?.id}
+            editingMine={editingMine}
+            onEditMine={() => setEditingMine(true)}
+          />
         ))}
       </div>
+      <PaginationControls page={page} pages={pages} onPageChange={setPage} />
     </section>
+  );
+}
+
+function ReviewArticle({
+  review,
+  isMine,
+  editingMine,
+  onEditMine,
+}: {
+  review: Review;
+  isMine: boolean;
+  editingMine: boolean;
+  onEditMine: () => void;
+}) {
+  const { t } = useI18n();
+
+  return (
+    <article className="border-t border-taupe-100 pt-4 first:border-0 first:pt-0">
+      <div className="flex items-center gap-2">
+        <Stars value={review.rating} size={14} />
+        <span className="text-sm font-medium text-forest-600">
+          {review.author}
+        </span>
+        {isMine && (
+          <>
+            <span className="rounded-full bg-blush-100 px-2 py-0.5 text-xs text-blush-400">
+              {t("rating.yourReview")}
+            </span>
+            {!editingMine && (
+              <button
+                type="button"
+                onClick={onEditMine}
+                className="rounded-md border border-olive-300 bg-olive-100 px-2.5 py-1 text-xs font-medium text-forest-600 hover:bg-olive-200"
+              >
+                {t("rating.editReview")}
+              </button>
+            )}
+          </>
+        )}
+        <span className="ml-auto text-xs text-taupe-300">
+          {new Date(review.created_at).toLocaleDateString()}
+        </span>
+      </div>
+      {review.title && (
+        <h3 className="mt-1 font-medium text-forest-600">{review.title}</h3>
+      )}
+      {review.body && <p className="mt-1 text-sm text-taupe-500">{review.body}</p>}
+    </article>
   );
 }
 

@@ -123,3 +123,30 @@ def test_google_rating_is_used_until_a_site_review_exists(seeded, api):
     assert summary["rating_source"] == "site"
     # Google's snapshot is kept alongside, not overwritten.
     assert summary["google_rating"] == 4.6
+
+
+@pytest.mark.django_db
+def test_reviews_are_paginated(seeded):
+    vendor = Vendor.objects.get(slug="kamnik-wedding-hall")
+    users = [
+        get_user_model().objects.create_user(
+            username=f"review-page-{i}",
+            email=f"review-page-{i}@example.com",
+            password="SufficientlyStrongPassword123",
+        )
+        for i in range(13)
+    ]
+    for user in users:
+        Review.objects.create(vendor=vendor, author=user, rating=5)
+
+    client, current_user = client_for("current-reviewer")
+    own = Review.objects.create(vendor=vendor, author=current_user, rating=4)
+    first = client.get("/api/vendors/kamnik-wedding-hall/reviews/")
+    second = client.get("/api/vendors/kamnik-wedding-hall/reviews/?page=2")
+
+    assert first.status_code == 200
+    assert first.json()["count"] == 14
+    assert len(first.json()["results"]) == 12
+    assert first.json()["next"] is not None
+    assert first.json()["current_user_review"]["id"] == own.id
+    assert second.json()["previous"] is not None
