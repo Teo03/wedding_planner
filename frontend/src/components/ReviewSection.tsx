@@ -173,12 +173,18 @@ function ReviewForm({
         {[1, 2, 3, 4, 5].map((score) => (
           <button
             key={score}
+            type="button"
             onClick={() => setRating(score)}
             aria-label={`${score}`}
             aria-pressed={rating === score}
-            className="p-0.5"
+            className="p-0.5 text-taupe-100 transition hover:text-olive-300 aria-pressed:text-olive-300"
           >
-            <Stars value={rating >= score ? 1 : 0} size={22} />
+            <span
+              aria-hidden="true"
+              className={rating >= score ? "text-olive-300" : undefined}
+            >
+              ★
+            </span>
           </button>
         ))}
       </div>
