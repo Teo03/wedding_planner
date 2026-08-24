@@ -6,6 +6,7 @@ import RatingBadge from "../components/RatingBadge";
 import ReviewSection from "../components/ReviewSection";
 import type { Contact } from "../api/types";
 import { useI18n, useLocalName } from "../i18n";
+import vendorPlaceholder from "../assets/vendor-placeholder.png";
 
 export default function VendorDetail() {
   const { slug = "" } = useParams();
@@ -23,20 +24,19 @@ export default function VendorDetail() {
       <p className="py-12 text-center text-taupe-300">{t("vendor.notFound")}</p>
     );
 
-  const gallery = vendor.media.filter((m) => m.url);
-  const cover = vendor.cover_photo ?? gallery[0]?.url;
-  const coverCredit = gallery.find((m) => m.url === cover)?.credit;
+  const allPhotos = vendor.media.filter((m) => m.url);
+  const cover = vendor.cover_photo ?? allPhotos[0]?.url;
+  const coverCredit = allPhotos.find((m) => m.url === cover)?.credit;
+  const gallery = allPhotos.filter((m) => m.url !== cover);
 
   return (
     <div className="space-y-8">
       <div className="overflow-hidden rounded-2xl bg-cream-100">
-        {cover && (
-          <img
-            src={cover}
-            alt={vendor.name}
-            className="h-64 w-full object-cover sm:h-80"
-          />
-        )}
+        <img
+          src={cover || vendorPlaceholder}
+          alt={vendor.name}
+          className="h-64 w-full object-cover sm:h-80"
+        />
       </div>
       {coverCredit && (
         <p className="-mt-6 text-right text-xs text-taupe-200">
@@ -86,7 +86,7 @@ export default function VendorDetail() {
         </div>
       </section>
 
-      {gallery.length > 1 && (
+      {gallery.length > 0 && (
         <section>
           <h2 className="font-display mb-3 text-2xl font-semibold">
             {t("vendor.gallery")}

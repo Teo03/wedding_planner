@@ -4,6 +4,7 @@ import { convert, formatMoney } from "../lib/currency";
 import { useSimulator } from "../context/SimulatorContext";
 import { useI18n, useLocalName } from "../i18n";
 import RatingBadge from "./RatingBadge";
+import vendorPlaceholder from "../assets/vendor-placeholder.png";
 
 export default function VendorCard({ vendor }: { vendor: VendorListItem }) {
   const { currency } = useSimulator();
@@ -20,18 +21,12 @@ export default function VendorCard({ vendor }: { vendor: VendorListItem }) {
       className="group flex flex-col overflow-hidden rounded-xl border border-taupe-100 bg-white transition hover:border-olive-300 hover:shadow-md"
     >
       <div className="aspect-[3/2] overflow-hidden bg-cream-100">
-        {vendor.cover_photo ? (
-          <img
-            src={vendor.cover_photo}
-            alt={vendor.name}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-taupe-200">
-            {vendor.name}
-          </div>
-        )}
+        <img
+          src={vendor.cover_photo || vendorPlaceholder}
+          alt={vendor.name}
+          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+          loading="lazy"
+        />
       </div>
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-start justify-between gap-2">

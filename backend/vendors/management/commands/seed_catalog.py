@@ -10,11 +10,10 @@ doesn't carry them:
     need something to price. Offers are generated per subcategory from the
     templates below, deterministically per vendor slug so re-runs are stable.
   * Cover photos. Where the team has supplied a vendor's own photo it is used
-    (seed_data/vendor_photos/<slug>.jpg). For everyone else, vendor-owned
-    photos couldn't be licensed for this demo -- see the sheet's own
-    "ON PHOTOS" note -- so they get a licensed image matched to their
-    subcategory, or a real photo of the actual place for the landmark venues.
-    Attribution rides along on the Media row for the licensed ones.
+    (seed_data/vendor_photos/<slug>.jpg) -- vendor-owned photos couldn't be
+    licensed for the rest for this demo, see the sheet's own "ON PHOTOS" note.
+    Everyone else gets no Media row at all, so the frontend falls back to the
+    generic placeholder instead of a stock photo shared across vendors.
 
 Google ratings ARE real, copied straight from the sheet's snapshot columns.
 """
@@ -80,57 +79,6 @@ CATEGORY_MAP = {
     "Invitation Designers/Printers": ("Print & Stationery", "Invitation Designers/Printers"),
     "Favor Tags & Packaging Print": ("Print & Stationery", "Favor Tags & Packaging Print"),
     "Invitation Designers/Printers & Favors": ("Print & Stationery", "Invitation Designers/Printers"),
-}
-
-# Sheet subcategory -> image theme in seed_data/media/.
-THEME_MAP = {
-    "Wedding Dress Shops": "wedding-dress-shops",
-    "Suit/Tux Rental & Menswear": "menswear",
-    "Tailors & Alterations": "tailors",
-    "Accessories": "accessories",
-    "Wedding Decor & Flowers": "decor-flowers",
-    "Balloon Decor": "balloon-decor",
-    "Event Furniture/Lighting Rental": "event-rental",
-    "Event Rental": "event-rental",
-    "Florists": "florists",
-    "Decorators": "decorators",
-    "Limousine/Cabriolet Rental": "limousine",
-    "Limousine Rental": "limousine",
-    "Rent-a-Car (general)": "limousine",
-    "Horse-Drawn Carriage Rental": "carriage",
-    "Restaurant / Event Space": "restaurant-venue",
-    "Villa / Private Estate": "villa",
-    "Outdoor Venue": "outdoor-venue",
-    "Photo/Video Combined Studios": "photography",
-    "Photographers": "photography",
-    "Orthodox Church": "mk-skopje-cathedral",
-    "Civil Ceremony / Registry Office": "civil-ceremony",
-    "Mosque": "mk-tetovo-mosque",
-    "Cake & Dessert": "cake",
-    "Catering Companies": "catering",
-    "Traditional/Folklore Orchestras": "folklore",
-    "Live Bands": "live-band",
-    "MC / Wedding Host / Music Groups": "mc-host",
-    "Chamber/String Ensembles": "string-ensemble",
-    "Event AV / Lighting & Sound Rental": "av-lighting",
-    "Jewelers": "jewelers",
-    "Makeup Artists": "makeup",
-    "Hair Stylists & Makeup": "hair",
-    "Spas / Pre-wedding Treatments": "spa",
-    "Full-Service Wedding Planners": "planners",
-    "Invitation Designers/Printers": "invitations",
-    "Favor Tags & Packaging Print": "favors",
-    "Invitation Designers/Printers & Favors": "invitations",
-}
-
-# Vendors that ARE the identifiable place, so a real photo of it is correct.
-PLACE_PHOTOS = {
-    "sveti-jovan-kaneo": "mk-ohrid-church",
-    "carska-gradina": "mk-bitola",
-    "sarena-dzamija": "mk-tetovo-mosque",
-    "kanevce": "mk-ohrid",
-    "metropol-lake-resort-hotel-metropol-belvju": "mk-ohrid",
-    "oreov-lad": "mk-matka",
 }
 
 # subcategory -> (offer name, price_type, low, high, unit note)
@@ -208,7 +156,6 @@ class Command(BaseCommand):
         if options["flush_demo"]:
             self.flush_demo()
         rows = json.loads((SEED_DIR / "vendors.json").read_text("utf-8"))
-        manifest = json.loads((SEED_DIR / "media" / "manifest.json").read_text("utf-8"))
 
         created = updated = skipped = 0
         for row in rows:
@@ -240,7 +187,7 @@ class Command(BaseCommand):
             vendor.categories.set([category, category.parent] if category.parent else [category])
 
             self.attach_contact(vendor, row)
-            self.attach_media(vendor, sub, manifest)
+            self.attach_media(vendor)
             self.attach_offers(vendor, sub, category)
 
         self.stdout.write(
@@ -309,18 +256,17 @@ class Command(BaseCommand):
             ),
         )
 
-    def attach_media(self, vendor, sub, manifest):
-        # A vendor's own photo always wins over the category stand-in.
+    def attach_media(self, vendor):
+        # Only a vendor's own photo qualifies -- no shared stock/category
+        # stand-in, since that put the same picture on every vendor without
+        # one. Without an own photo, drop any stale Media row from an
+        # earlier seed run and let the frontend show its placeholder.
         own = VENDOR_PHOTO_DIR / f"{vendor.slug}.jpg"
-        if own.exists():
-            entry = {"file": f"own-{vendor.slug}.jpg", "credit": "", "credit_url": ""}
-            source = own
-        else:
-            theme = PLACE_PHOTOS.get(vendor.slug) or THEME_MAP.get(sub)
-            entry = manifest.get(theme)
-            if not entry:
-                return
-            source = SEED_DIR / "media" / entry["file"]
+        if not own.exists():
+            Media.objects.filter(vendor=vendor, is_cover_photo=True).delete()
+            return
+        entry = {"file": f"own-{vendor.slug}.jpg", "credit": "", "credit_url": ""}
+        source = own
         if not source.exists():
             return
         target_rel = f"vendors/{entry['file']}"
