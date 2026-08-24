@@ -8,6 +8,7 @@ import {
 } from "react";
 import { api } from "../api/client";
 import type { Currency, Offer } from "../api/types";
+import { clampGuestCount } from "../lib/guests";
 
 export interface SimItem {
   offerId: number;
@@ -46,7 +47,13 @@ const Ctx = createContext<SimContextValue | null>(null);
 function load(): SimState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as SimState;
+    if (raw) {
+      const parsed = JSON.parse(raw) as SimState;
+      return {
+        ...parsed,
+        guestCount: clampGuestCount(parsed.guestCount),
+      };
+    }
   } catch {
     /* ignore malformed storage */
   }
@@ -93,7 +100,7 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
     () => ({
       ...state,
       setGuestCount: (n) =>
-        setState((s) => ({ ...s, guestCount: Math.max(1, n || 1) })),
+        setState((s) => ({ ...s, guestCount: clampGuestCount(n) })),
       setCurrency: (currency) => setState((s) => ({ ...s, currency })),
       toggleCurrency: () =>
         setState((s) => ({

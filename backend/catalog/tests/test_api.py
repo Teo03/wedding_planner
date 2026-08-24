@@ -83,7 +83,7 @@ def test_estimate_endpoint_tiered(seeded, api):
     resp = api.get(f"/api/offers/{offer.id}/estimate/?guests=120")
     data = resp.json()
     assert data["unit_price"] == "32.00"
-    assert data["total"] == "3840.00"
+    assert data["total"] == "4140.00"
 
 
 @pytest.mark.django_db

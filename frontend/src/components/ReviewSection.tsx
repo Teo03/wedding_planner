@@ -11,6 +11,7 @@ export default function ReviewSection({ vendorSlug }: { vendorSlug: string }) {
   const [summary, setSummary] = useState<RatingSummary | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingMine, setEditingMine] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -28,6 +29,17 @@ export default function ReviewSection({ vendorSlug }: { vendorSlug: string }) {
   }, [load]);
 
   const mine = reviews.find((review) => review.author_id === auth.user?.id);
+  const showForm = !mine || editingMine;
+
+  const handleSaved = async () => {
+    await load();
+    setEditingMine(false);
+  };
+
+  const handleDeleted = async () => {
+    await load();
+    setEditingMine(false);
+  };
 
   return (
     <section className="rounded-2xl border border-taupe-100 bg-white p-6">
@@ -38,12 +50,15 @@ export default function ReviewSection({ vendorSlug }: { vendorSlug: string }) {
         {summary && <SummaryLine summary={summary} />}
       </div>
 
-      <ReviewForm
-        vendorSlug={vendorSlug}
-        existing={mine}
-        onSaved={load}
-        onDeleted={load}
-      />
+      {showForm && (
+        <ReviewForm
+          vendorSlug={vendorSlug}
+          existing={mine}
+          onSaved={handleSaved}
+          onDeleted={handleDeleted}
+          onCancel={mine ? () => setEditingMine(false) : undefined}
+        />
+      )}
 
       <div className="mt-6 space-y-4">
         {loading && <p className="text-sm text-taupe-300">{t("browse.loading")}</p>}
@@ -61,9 +76,20 @@ export default function ReviewSection({ vendorSlug }: { vendorSlug: string }) {
                 {review.author}
               </span>
               {review.author_id === auth.user?.id && (
-                <span className="rounded-full bg-blush-100 px-2 py-0.5 text-xs text-blush-400">
-                  {t("rating.yourReview")}
-                </span>
+                <>
+                  <span className="rounded-full bg-blush-100 px-2 py-0.5 text-xs text-blush-400">
+                    {t("rating.yourReview")}
+                  </span>
+                  {!editingMine && (
+                    <button
+                      type="button"
+                      onClick={() => setEditingMine(true)}
+                      className="rounded-md border border-olive-300 bg-olive-100 px-2.5 py-1 text-xs font-medium text-forest-600 hover:bg-olive-200"
+                    >
+                      {t("rating.editReview")}
+                    </button>
+                  )}
+                </>
               )}
               <span className="ml-auto text-xs text-taupe-300">
                 {new Date(review.created_at).toLocaleDateString()}
@@ -110,11 +136,13 @@ function ReviewForm({
   existing,
   onSaved,
   onDeleted,
+  onCancel,
 }: {
   vendorSlug: string;
   existing?: Review;
   onSaved: () => Promise<void>;
   onDeleted: () => Promise<void>;
+  onCancel?: () => void;
 }) {
   const { t } = useI18n();
   const [rating, setRating] = useState(0);
@@ -215,13 +243,25 @@ function ReviewForm({
           {saving ? t("rating.saving") : t("rating.submit")}
         </button>
         {existing && (
-          <button
-            onClick={remove}
-            disabled={saving}
-            className="rounded-md border border-taupe-100 px-3 py-2 text-sm text-taupe-500 hover:bg-white"
-          >
-            {t("rating.deleteReview")}
-          </button>
+          <>
+            <button
+              onClick={remove}
+              disabled={saving}
+              className="rounded-md border border-taupe-100 px-3 py-2 text-sm text-taupe-500 hover:bg-white"
+            >
+              {t("rating.deleteReview")}
+            </button>
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={saving}
+                className="rounded-md border border-taupe-100 px-3 py-2 text-sm text-taupe-500 hover:bg-white"
+              >
+                {t("nav.close")}
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSimulator } from "../context/SimulatorContext";
 import { useI18n } from "../i18n";
+import { clampGuestCount, MAX_GUEST_COUNT } from "../lib/guests";
 
 /**
  * Guest count input.
@@ -31,10 +32,14 @@ export default function GuestCountInput({
 
   const commit = (raw: string) => {
     const digits = raw.replace(/[^\d]/g, "");
-    setDraft(digits);
-    if (digits === "") return; // let the field be empty while editing
+    if (digits === "") {
+      setDraft("");
+      return; // let the field be empty while editing
+    }
     const parsed = Number(digits);
-    if (Number.isFinite(parsed) && parsed > 0) sim.setGuestCount(parsed);
+    const clamped = clampGuestCount(parsed);
+    setDraft(String(clamped));
+    sim.setGuestCount(clamped);
   };
 
   return (
@@ -48,6 +53,7 @@ export default function GuestCountInput({
         type="text"
         inputMode="numeric"
         pattern="[0-9]*"
+        maxLength={String(MAX_GUEST_COUNT).length}
         value={draft}
         onChange={(e) => commit(e.target.value)}
         onBlur={() => {
