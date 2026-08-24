@@ -49,6 +49,27 @@ def _match_tier(offer, guests):
     return None
 
 
+def _progressive_tier_total(offer, guests):
+    """Charge each guest bracket progressively.
+
+    Example: 1-100 at 44, 101-180 at 40, 181+ at 37 means 101 guests costs
+    100 * 44 + 1 * 40, not 101 * 40.
+    """
+    total = Decimal("0")
+    charged_through = 0
+
+    for tier in offer.price_tiers.all():
+        tier_end = tier.guests_to or guests
+        tier_guests = min(guests, tier_end) - charged_through
+        if tier_guests > 0:
+            total += Decimal(tier.price_per_guest) * tier_guests
+            charged_through += tier_guests
+        if charged_through >= guests:
+            break
+
+    return total
+
+
 def estimate_offer(offer, guests: Optional[int] = None) -> dict:
     """Return a JSON-serializable estimate for one offer at a guest count."""
     ptype = offer.price_type
@@ -96,6 +117,18 @@ def estimate_offer(offer, guests: Optional[int] = None) -> dict:
         effective = offer.min_guest_count
         min_applied = True
 
+    if offer.max_capacity and effective > offer.max_capacity:
+        return build(
+            effective_guests=effective,
+            min_guest_applied=min_applied,
+            note=(
+                f"This package supports up to {offer.max_capacity} guests; "
+                f"{effective} guests will not fit."
+            ),
+            note_code="over_capacity",
+            note_params={"guests": effective, "max": offer.max_capacity},
+        )
+
     if ptype == "per_guest":
         if offer.price_per_guest is None:
             return build(
@@ -116,8 +149,11 @@ def estimate_offer(offer, guests: Optional[int] = None) -> dict:
                 note_params={"guests": effective},
             )
         unit = tier.price_per_guest
+        total = _progressive_tier_total(offer, effective)
 
-    total = Decimal(unit) * effective
+    if ptype == "per_guest":
+        total = Decimal(unit) * effective
+
     if min_applied:
         note = (
             f"Priced for {effective} guests (vendor minimum) "

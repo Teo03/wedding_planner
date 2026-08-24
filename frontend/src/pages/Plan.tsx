@@ -8,6 +8,7 @@ import type { Estimate } from "../api/types";
 import { useEstimateNote, useI18n, useLocalName } from "../i18n";
 import GuestCountInput from "../components/GuestCountInput";
 import CurrencyPicker from "../components/CurrencyPicker";
+import Breadcrumbs from "../components/Breadcrumbs";
 
 export default function Plan() {
   const sim = useSimulator();
@@ -39,21 +40,38 @@ export default function Plan() {
 
   if (sim.items.length === 0) {
     return (
-      <div className="py-16 text-center">
-        <h1 className="font-display text-3xl font-semibold">{t("plan.empty")}</h1>
-        <p className="mt-2 text-taupe-400">{t("plan.emptyLead")}</p>
-        <Link
-          to="/vendors"
-          className="mt-6 inline-block rounded-lg bg-forest-500 px-5 py-2.5 font-medium text-cream-50 hover:bg-forest-600"
-        >
-          {t("plan.browseVendors")}
-        </Link>
+      <div className="space-y-6">
+        <Breadcrumbs
+          items={[
+            { label: t("nav.home"), to: "/" },
+            { label: t("plan.title") },
+          ]}
+        />
+        <div className="py-16 text-center">
+          <h1 className="font-display text-3xl font-semibold">
+            {t("plan.empty")}
+          </h1>
+          <p className="mt-2 text-taupe-400">{t("plan.emptyLead")}</p>
+          <Link
+            to="/vendors"
+            className="mt-6 inline-block rounded-lg bg-forest-500 px-5 py-2.5 font-medium text-cream-50 hover:bg-forest-600"
+          >
+            {t("plan.browseVendors")}
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs
+        items={[
+          { label: t("nav.home"), to: "/" },
+          { label: t("plan.title") },
+        ]}
+      />
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-3xl font-semibold">{t("plan.title")}</h1>
         <div className="flex items-center gap-2">

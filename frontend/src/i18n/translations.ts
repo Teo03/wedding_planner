@@ -123,6 +123,8 @@ export const en = {
     no_price: "No price set for this offer.",
     no_per_guest_price: "No per-guest price set.",
     no_tier: "No price tier matches {guests} guests.",
+    over_capacity:
+      "This package supports up to {max} guests; {guests} guests will not fit.",
     flat_fixed: "Flat package price.",
     flat_per_hour: "Hourly rate; multiply by the number of booked hours.",
     flat_starting_at: "Starting price; final quote depends on the vendor.",
@@ -288,6 +290,8 @@ export const mk: DeepPartial<typeof en> = {
     no_price: "Нема поставена цена за оваа понуда.",
     no_per_guest_price: "Нема поставена цена по гостин.",
     no_tier: "Нема ценовен ранг за {guests} гости.",
+    over_capacity:
+      "Овој пакет има капацитет до {max} гости; нема доволно место за {guests} гости.",
     flat_fixed: "Фиксна цена на пакетот.",
     flat_per_hour: "Цена по час; помножете со бројот на резервирани часови.",
     flat_starting_at: "Почетна цена; конечната понуда зависи од понудувачот.",

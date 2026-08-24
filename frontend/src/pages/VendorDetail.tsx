@@ -7,6 +7,7 @@ import ReviewSection from "../components/ReviewSection";
 import type { Contact } from "../api/types";
 import { useI18n, useLocalName } from "../i18n";
 import vendorPlaceholder from "../assets/vendor-placeholder.png";
+import Breadcrumbs from "../components/Breadcrumbs";
 
 export default function VendorDetail() {
   const { slug = "" } = useParams();
@@ -28,9 +29,23 @@ export default function VendorDetail() {
   const cover = vendor.cover_photo ?? allPhotos[0]?.url;
   const coverCredit = allPhotos.find((m) => m.url === cover)?.credit;
   const gallery = allPhotos.filter((m) => m.url !== cover);
+  const primaryCategory = vendor.categories[0];
 
   return (
     <div className="space-y-8">
+      <Breadcrumbs
+        items={[
+          { label: t("nav.home"), to: "/" },
+          primaryCategory
+            ? {
+                label: localName(primaryCategory),
+                to: `/category/${primaryCategory.slug}`,
+              }
+            : { label: t("nav.vendors"), to: "/vendors" },
+          { label: vendor.name },
+        ]}
+      />
+
       <div className="overflow-hidden rounded-2xl bg-cream-100">
         <img
           src={cover || vendorPlaceholder}

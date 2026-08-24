@@ -174,10 +174,9 @@ export interface Review {
   updated_at: string;
 }
 
-export interface ReviewList {
-  count: number;
+export interface ReviewList extends Paginated<Review> {
   summary: RatingSummary;
-  results: Review[];
+  current_user_review: Review | null;
 }
 
 export interface AuthResponse {

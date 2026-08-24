@@ -57,14 +57,43 @@ def test_per_guest_above_minimum_not_adjusted(vendor):
 
 
 @pytest.mark.django_db
-def test_tiered_selects_correct_bracket(vendor):
+def test_over_capacity_has_no_total(vendor):
+    offer = make_offer(
+        vendor,
+        price_type="per_guest",
+        price_per_guest=Decimal("30"),
+        max_capacity=120,
+    )
+    est = estimate_offer(offer, guests=150)
+
+    assert est["effective_guests"] == 150
+    assert est["total"] is None
+    assert est["note_code"] == "over_capacity"
+    assert est["note_params"] == {"guests": 150, "max": 120}
+
+
+@pytest.mark.django_db
+def test_tiered_charges_brackets_progressively(vendor):
     offer = make_offer(vendor, price_type="tiered_per_guest")
     OfferPriceTier.objects.create(offer=offer, guests_from=50, guests_to=100, price_per_guest=Decimal("35"))
     OfferPriceTier.objects.create(offer=offer, guests_from=101, guests_to=150, price_per_guest=Decimal("32"))
     OfferPriceTier.objects.create(offer=offer, guests_from=151, guests_to=None, price_per_guest=Decimal("28"))
     est = estimate_offer(offer, guests=120)
     assert est["unit_price"] == "32.00"
-    assert est["total"] == "3840.00"  # 32 * 120
+    assert est["total"] == "4140.00"  # 100 * 35 + 20 * 32
+
+
+@pytest.mark.django_db
+def test_tiered_total_does_not_drop_at_bracket_boundary(vendor):
+    offer = make_offer(vendor, price_type="tiered_per_guest")
+    OfferPriceTier.objects.create(offer=offer, guests_from=50, guests_to=100, price_per_guest=Decimal("35"))
+    OfferPriceTier.objects.create(offer=offer, guests_from=101, guests_to=150, price_per_guest=Decimal("32"))
+
+    at_boundary = estimate_offer(offer, guests=100)
+    after_boundary = estimate_offer(offer, guests=101)
+
+    assert at_boundary["total"] == "3500.00"
+    assert after_boundary["total"] == "3532.00"
 
 
 @pytest.mark.django_db

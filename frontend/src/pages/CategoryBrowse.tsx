@@ -5,6 +5,8 @@ import { useAsync } from "../hooks/useAsync";
 import VendorCard from "../components/VendorCard";
 import { useI18n, useLocalName } from "../i18n";
 import Stars from "../components/Stars";
+import PaginationControls from "../components/PaginationControls";
+import Breadcrumbs from "../components/Breadcrumbs";
 
 export default function CategoryBrowse() {
   const { slug = "" } = useParams();
@@ -21,13 +23,20 @@ export default function CategoryBrowse() {
   const [minRating, setMinRating] = useState("");
   const [search, setSearch] = useState("");
   const [ordering, setOrdering] = useState("name");
+  const [page, setPage] = useState(1);
 
   // The nav menu deep-links straight to a subcategory.
   useEffect(() => {
     setSub(searchParams.get("sub"));
+    setPage(1);
   }, [searchParams, slug]);
 
   const categoryParam = sub ?? slug;
+
+  const updateSub = (next: string | null) => {
+    setSub(next);
+    setPage(1);
+  };
 
   const { data: vendors, loading } = useAsync(
     () =>
@@ -38,16 +47,26 @@ export default function CategoryBrowse() {
         min_rating: minRating || undefined,
         search: search || undefined,
         ordering,
+        page,
       }),
-    [categoryParam, city, maxPrice, minRating, search, ordering],
+    [categoryParam, city, maxPrice, minRating, search, ordering, page],
   );
+
+  const pages = vendors ? Math.max(1, Math.ceil(vendors.count / 12)) : 1;
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs
+        items={[
+          { label: t("nav.home"), to: "/" },
+          { label: category ? localName(category) : "..." },
+        ]}
+      />
+
       <div>
         <h1 className="font-display text-3xl font-semibold">
           <span aria-hidden="true">{category?.icon}</span>{" "}
-          {category ? localName(category) : "…"}
+          {category ? localName(category) : "..."}
         </h1>
         {category?.description && (
           <p className="mt-1 text-taupe-400">{category.description}</p>
@@ -55,14 +74,14 @@ export default function CategoryBrowse() {
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        <Chip active={sub === null} onClick={() => setSub(null)}>
+        <Chip active={sub === null} onClick={() => updateSub(null)}>
           {t("browse.all")}
         </Chip>
         {category?.children.map((child) => (
           <Chip
             key={child.id}
             active={sub === child.slug}
-            onClick={() => setSub(child.slug)}
+            onClick={() => updateSub(child.slug)}
           >
             {localName(child)}
           </Chip>
@@ -72,7 +91,10 @@ export default function CategoryBrowse() {
       <div className="flex flex-wrap items-center gap-2">
         <select
           value={city}
-          onChange={(e) => setCity(e.target.value)}
+          onChange={(e) => {
+            setCity(e.target.value);
+            setPage(1);
+          }}
           className="rounded-md border border-taupe-100 bg-white px-3 py-1.5 text-sm"
         >
           <option value="">{t("browse.allCities")}</option>
@@ -85,7 +107,10 @@ export default function CategoryBrowse() {
 
         <select
           value={minRating}
-          onChange={(e) => setMinRating(e.target.value)}
+          onChange={(e) => {
+            setMinRating(e.target.value);
+            setPage(1);
+          }}
           aria-label={t("browse.minRating")}
           className="rounded-md border border-taupe-100 bg-white px-3 py-1.5 text-sm"
         >
@@ -98,20 +123,29 @@ export default function CategoryBrowse() {
 
         <input
           value={maxPrice}
-          onChange={(e) => setMaxPrice(e.target.value.replace(/[^\d]/g, ""))}
+          onChange={(e) => {
+            setMaxPrice(e.target.value.replace(/[^\d]/g, ""));
+            setPage(1);
+          }}
           inputMode="numeric"
           placeholder={`${t("browse.maxPrice")} €`}
           className="w-32 rounded-md border border-taupe-100 bg-white px-3 py-1.5 text-sm"
         />
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           placeholder={t("browse.search")}
           className="w-40 rounded-md border border-taupe-100 bg-white px-3 py-1.5 text-sm"
         />
         <select
           value={ordering}
-          onChange={(e) => setOrdering(e.target.value)}
+          onChange={(e) => {
+            setOrdering(e.target.value);
+            setPage(1);
+          }}
           aria-label={t("browse.sortBy")}
           className="ml-auto rounded-md border border-taupe-100 bg-white px-3 py-1.5 text-sm"
         >
@@ -131,11 +165,14 @@ export default function CategoryBrowse() {
       {loading ? (
         <p className="py-10 text-center text-taupe-300">{t("browse.loading")}</p>
       ) : vendors && vendors.results.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {vendors.results.map((vendor) => (
-            <VendorCard key={vendor.id} vendor={vendor} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {vendors.results.map((vendor) => (
+              <VendorCard key={vendor.id} vendor={vendor} />
+            ))}
+          </div>
+          <PaginationControls page={page} pages={pages} onPageChange={setPage} />
+        </>
       ) : (
         <p className="py-10 text-center text-taupe-300">
           {t("browse.noResults")}

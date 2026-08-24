@@ -177,8 +177,8 @@ export const api = {
   offer: (id: number) => get<Offer>(`/offers/${id}/`),
   estimate: (offerId: number, guests?: number) =>
     get<Estimate>(`/offers/${offerId}/estimate/`, { guests }),
-  reviews: (vendorSlug: string) =>
-    get<ReviewList>(`/vendors/${vendorSlug}/reviews/`),
+  reviews: (vendorSlug: string, params?: Params) =>
+    get<ReviewList>(`/vendors/${vendorSlug}/reviews/`, params),
   postReview: (
     vendorSlug: string,
     data: { rating: number; title?: string; body?: string },
