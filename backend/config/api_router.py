@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.urls import path
 
 from accounts.auth import jwt_required
+from assistant.views import ChatView
 from catalog import views as catalog_views
 from locations import views as location_views
 from reviews import views as review_views
@@ -38,6 +39,7 @@ urlpatterns = [
         review_views.VendorReviewsView.as_view(),
         name="vendor-reviews",
     ),
+    path("assistant/chat/", ChatView.as_view(), name="assistant-chat"),
     path("categories/", jwt_required(catalog_views.category_list), name="category-list"),
     path(
         "categories/<slug:slug>/",

@@ -6,6 +6,7 @@ import { useSimulator } from "../context/SimulatorContext";
 import { useI18n } from "../i18n";
 import CategoryMenu from "./CategoryMenu";
 import Logo from "./Logo";
+import ChatWidget from "./ChatWidget";
 import SideDrawer from "./SideDrawer";
 
 /**
@@ -82,6 +83,8 @@ export default function Layout({ children }: { children: ReactNode }) {
       <footer className="border-t border-taupe-100 bg-cream-100 py-6 text-center text-sm text-taupe-300">
         {t("footer")}
       </footer>
+
+      <ChatWidget />
     </div>
   );
 }

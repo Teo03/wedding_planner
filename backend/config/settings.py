@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "vendors",
     "media",
     "reviews",
+    "assistant",
 ]
 
 MIDDLEWARE = [
@@ -163,6 +164,14 @@ SIMPLE_JWT = {
     ),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=env.int("JWT_REFRESH_DAYS", default=14)),
 }
+
+# Assistant model. Any OpenAI-compatible endpoint works; Groq's free tier is
+# the default because Azure has no free generative tier and GitHub Models is
+# retiring. Leave LLM_API_KEY empty and the assistant answers from the catalog
+# alone, without a model.
+LLM_API_BASE = env("LLM_API_BASE", default="https://api.groq.com/openai/v1")
+LLM_API_KEY = env("LLM_API_KEY", default="")
+LLM_MODEL = env("LLM_MODEL", default="openai/gpt-oss-120b")
 
 CORS_ALLOW_CREDENTIALS = True
 JWT_COOKIE_SECURE = env.bool("JWT_COOKIE_SECURE", default=not DEBUG)

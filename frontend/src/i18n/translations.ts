@@ -106,6 +106,22 @@ export const en = {
     signInToReview: "Sign in to leave a review.",
   },
 
+  chat: {
+    title: "Wedding assistant",
+    intro:
+      "Ask about vendors, or give me a budget and guest count and I'll propose a plan. Everything I suggest comes from this catalog.",
+    placeholder: "Ask about vendors or a budget…",
+    send: "Send",
+    thinking: "Thinking…",
+    example1: "Photographers in Skopje",
+    example2: "Plan for 120 guests, 8000 EUR",
+    example3: "Best rated venues in Ohrid",
+    planFor: "Plan for {guests} guests",
+    total: "Estimated total",
+    remaining: "€{amount} left over",
+    over: "€{amount} over budget",
+  },
+
   price: {
     fixed: "{amount} fixed",
     startingAt: "from {amount}",
@@ -271,6 +287,22 @@ export const mk: DeepPartial<typeof en> = {
     yourReview: "Вашата рецензија",
     ratingRequired: "Изберете оценка од 1 до 5 ѕвезди.",
     signInToReview: "Најавете се за да оставите рецензија.",
+  },
+
+  chat: {
+    title: "Свадбен асистент",
+    intro:
+      "Прашајте за понудувачи, или кажете буџет и број на гости и ќе предложам план. Сè што предлагам е од овој каталог.",
+    placeholder: "Прашајте за понудувачи или буџет…",
+    send: "Прати",
+    thinking: "Размислувам…",
+    example1: "Фотографи во Скопје",
+    example2: "План за 120 гости, 8000 евра",
+    example3: "Најдобро оценети сали во Охрид",
+    planFor: "План за {guests} гости",
+    total: "Проценет вкупен износ",
+    remaining: "Преостануваат €{amount}",
+    over: "€{amount} над буџетот",
   },
 
   price: {

@@ -174,6 +174,41 @@ export interface Review {
   updated_at: string;
 }
 
+export interface ChatVendor {
+  name: string;
+  slug: string;
+  city: string | null;
+  categories: string[];
+  rating: number | null;
+  rating_source: "site" | "google" | null;
+  from_eur: number | null;
+  phone: string;
+}
+
+export interface ChatPlanLine extends ChatVendor {
+  category_slug: string;
+  allowance_eur: number;
+  estimated_eur: number;
+  over_allowance: boolean;
+}
+
+export interface ChatPlan {
+  budget_eur: number;
+  guests: number;
+  total_eur: number;
+  remaining_eur: number;
+  lines: ChatPlanLine[];
+}
+
+export interface ChatReply {
+  answer: string;
+  /** "model" when a language model wrote the prose, "catalog" when the
+   *  deterministic fallback did. Both are grounded in the same rows. */
+  source: "model" | "catalog";
+  vendors: ChatVendor[];
+  plan: ChatPlan | null;
+}
+
 export interface ReviewList extends Paginated<Review> {
   summary: RatingSummary;
   current_user_review: Review | null;

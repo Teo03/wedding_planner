@@ -1,6 +1,7 @@
 import type {
   AuthResponse,
   Category,
+  ChatReply,
   RatingSummary,
   Review,
   ReviewList,
@@ -187,6 +188,11 @@ export const api = {
       `/vendors/${vendorSlug}/reviews/`,
       data,
     ),
+  chat: (
+    message: string,
+    history: { role: "user" | "assistant"; content: string }[],
+    guests?: number,
+  ) => post<ChatReply>("/assistant/chat/", { message, history, guests }),
   deleteReview: (vendorSlug: string) =>
     del<{ summary: RatingSummary }>(`/vendors/${vendorSlug}/reviews/`),
 };
