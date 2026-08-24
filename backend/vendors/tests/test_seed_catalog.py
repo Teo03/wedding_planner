@@ -11,7 +11,6 @@ from media.models import Media
 from vendors.management.commands.seed_catalog import (
     CATEGORY_MAP,
     OFFER_TEMPLATES,
-    THEME_MAP,
 )
 from vendors.models import Vendor
 
@@ -23,8 +22,7 @@ def imported(db):
     call_command("seed_catalog")
 
 
-def test_every_mapped_subcategory_has_a_theme_and_offer_template():
-    assert set(CATEGORY_MAP) == set(THEME_MAP)
+def test_every_mapped_subcategory_has_an_offer_template():
     assert set(CATEGORY_MAP) == set(OFFER_TEMPLATES)
 
 
@@ -38,9 +36,18 @@ def test_import_loads_the_sheet(imported):
 
 
 @pytest.mark.django_db
-def test_every_imported_vendor_gets_a_matching_cover_photo(imported):
-    assert not Vendor.objects.filter(media__isnull=True).exists()
-    assert Media.objects.filter(is_cover_photo=True).count() == Vendor.objects.count()
+def test_only_vendors_with_their_own_photo_get_a_cover(imported):
+    """No shared stock stand-ins: one picture must not appear on many vendors."""
+    from vendors.management.commands.seed_catalog import VENDOR_PHOTO_DIR
+
+    supplied = {p.stem for p in VENDOR_PHOTO_DIR.glob("*.jpg")}
+    with_cover = set(
+        Media.objects.filter(is_cover_photo=True).values_list("vendor__slug", flat=True)
+    )
+    assert with_cover <= supplied
+    # Every cover image is unique to its vendor.
+    images = list(Media.objects.filter(is_cover_photo=True).values_list("image", flat=True))
+    assert len(images) == len(set(images))
 
 
 @pytest.mark.django_db
@@ -88,9 +95,11 @@ def test_vendor_supplied_photo_wins_over_the_category_standin(imported):
 
 
 @pytest.mark.django_db
-def test_vendors_without_a_supplied_photo_still_get_one(imported):
+def test_vendors_without_a_photo_get_none(imported):
+    """They fall through to the frontend placeholder rather than a stock image."""
     from vendors.management.commands.seed_catalog import VENDOR_PHOTO_DIR
 
     supplied = {p.stem for p in VENDOR_PHOTO_DIR.glob("*.jpg")}
     other = Vendor.objects.exclude(slug__in=supplied).first()
-    assert other.media.filter(is_cover_photo=True).exists()
+    if other is not None:
+        assert not other.media.filter(is_cover_photo=True).exists()
