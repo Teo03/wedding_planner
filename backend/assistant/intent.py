@@ -12,19 +12,34 @@ from catalog.models import Category
 from locations.models import Location
 
 # Words couples use that don't appear in the taxonomy itself.
+#
+# Entries are matched as STEMS, not whole words: Macedonian inflects heavily
+# ("сала" / "сали" / "салата"), and matching only the dictionary form meant a
+# plural silently failed to select a category -- which then returned an
+# unfiltered list, so a spa could be presented as a wedding hall.
 SYNONYMS = {
-    "venues": ["venue", "hall", "restaurant", "reception", "сала", "ресторан", "простор"],
-    "catering-food": ["catering", "food", "menu", "cake", "кетеринг", "храна", "торта", "мени"],
-    "photography-video": ["photo", "photographer", "video", "фото", "фотограф", "видео"],
-    "attire": ["dress", "gown", "suit", "tux", "венчаница", "фустан", "одело"],
-    "beauty": ["makeup", "hair", "spa", "шминка", "фризер", "коса", "спа"],
-    "entertainment": ["band", "dj", "music", "orchestra", "бенд", "музика", "оркестар", "диџеј"],
-    "decor-flowers": ["flowers", "decor", "bouquet", "цвеќе", "декор", "букет", "декорација"],
-    "rings-jewelry": ["ring", "jewel", "gold", "прстен", "накит", "злато"],
-    "planning-services": ["planner", "organiser", "organizer", "организатор", "планер"],
-    "car-rental-transport": ["car", "limo", "transport", "автомобил", "лимузина", "превоз"],
+    "venues": ["venue", "hall", "restoran", "restaurant", "reception",
+               "сал", "ресторан", "простор", "локац"],
+    "catering-food": ["catering", "food", "menu", "cake", "кетеринг", "храна",
+                      "торт", "мени", "послужув"],
+    "photography-video": ["photo", "photographer", "video", "фото", "фотограф",
+                          "видео", "снимањ"],
+    "attire": ["dress", "gown", "suit", "tux", "венчаниц", "фустан", "одел",
+               "невест", "младожен"],
+    "beauty": ["makeup", "hair", "spa", "шминк", "фризер", "коса", "спа",
+               "убавин"],
+    "entertainment": ["band", "dj", "music", "orchestra", "бенд", "музик",
+                      "оркестар", "диџеј", "забав"],
+    "decor-flowers": ["flower", "decor", "bouquet", "цвеќ", "декор", "букет"],
+    "rings-jewelry": ["ring", "jewel", "gold", "прстен", "накит", "злато",
+                      "златар"],
+    "planning-services": ["planner", "organiser", "organizer", "организатор",
+                          "планер", "координатор"],
+    "car-rental-transport": ["limo", "transport", "автомобил", "лимузин",
+                             "превоз", "кочиј"],
     "print-stationery": ["invitation", "invite", "покан", "печат"],
-    "ceremony-officiants": ["church", "ceremony", "mosque", "црква", "церемонија", "џамија"],
+    "ceremony-officiants": ["church", "ceremony", "mosque", "цркв", "церемониј",
+                            "џамиј", "венчавк"],
 }
 
 BUDGET_WORDS = ("budget", "буџет", "spend", "потрош", "плам", "план", "plan")
@@ -32,9 +47,13 @@ QUALITY_WORDS = ("best", "top", "highest", "најдобр", "топ", "преп
 
 
 def _fold(text):
-    """Lowercase and strip accents so 'Скопје' and 'skopje' both match."""
-    text = text.lower()
-    return unicodedata.normalize("NFKD", text)
+    """Lowercase and normalise to a composed form.
+
+    NFC, not NFKD: decomposing splits Macedonian ќ and ѓ into a base letter
+    plus a combining accent, so a literal like "цвеќ" stops matching text that
+    looks identical on screen.
+    """
+    return unicodedata.normalize("NFC", text.lower())
 
 
 def parse(message):
@@ -59,7 +78,7 @@ def _category(text):
             if name and _fold(name).split(" ")[0] in text and len(name) > 3:
                 return category.slug
     for slug, words in SYNONYMS.items():
-        if any(word in text for word in words):
+        if any(_fold(word) in text for word in words):
             if Category.objects.filter(slug=slug).exists():
                 return slug
     return None

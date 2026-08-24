@@ -145,3 +145,34 @@ def test_guest_count_is_not_mistaken_for_a_budget(seeded):
     parsed = intent.parse("a venue for 150 guests")
     assert parsed["guests"] == 150
     assert parsed["budget"] is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "message,expected",
+    [
+        # Macedonian inflects: the plural and definite forms must work too,
+        # or the category filter silently drops and unrelated vendors come back.
+        ("сали за свадба во Скопје", "venues"),
+        ("сала за свадба", "venues"),
+        ("салата е голема", "venues"),
+        ("торти за свадба", "catering-food"),
+        ("венчаници", "attire"),
+        ("фризери", "beauty"),
+        ("бендови", "entertainment"),
+        ("цвеќе за свадба", "decor-flowers"),
+        ("златари", "rings-jewelry"),
+    ],
+)
+def test_inflected_macedonian_still_selects_a_category(seeded, message, expected):
+    assert intent.parse(message)["category"] == expected
+
+
+@pytest.mark.django_db
+def test_venue_question_does_not_return_unrelated_vendors(seeded, api, settings):
+    """The bug this guards: 'сали' matched nothing, so a spa came back as a hall."""
+    settings.LLM_API_KEY = ""
+    data = ask(api, "сали за свадба во Скопје").json()
+    assert data["filters"].get("category") == "venues"
+    for vendor in data["vendors"]:
+        assert vendor["categories"], vendor["name"]
