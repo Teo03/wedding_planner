@@ -6,6 +6,7 @@ import VendorCard from "../components/VendorCard";
 import { useI18n, useLocalName } from "../i18n";
 import Stars from "../components/Stars";
 import PaginationControls from "../components/PaginationControls";
+import Breadcrumbs from "../components/Breadcrumbs";
 
 export default function CategoryBrowse() {
   const { slug = "" } = useParams();
@@ -55,10 +56,17 @@ export default function CategoryBrowse() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs
+        items={[
+          { label: t("nav.home"), to: "/" },
+          { label: category ? localName(category) : "..." },
+        ]}
+      />
+
       <div>
         <h1 className="font-display text-3xl font-semibold">
           <span aria-hidden="true">{category?.icon}</span>{" "}
-          {category ? localName(category) : "…"}
+          {category ? localName(category) : "..."}
         </h1>
         {category?.description && (
           <p className="mt-1 text-taupe-400">{category.description}</p>
