@@ -100,7 +100,6 @@ export default function SideDrawer({
                   onClick={onClose}
                   className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-forest-600 hover:bg-cream-100"
                 >
-                  <span aria-hidden="true">{category.icon || "•"}</span>
                   {localName(category)}
                 </Link>
               </li>

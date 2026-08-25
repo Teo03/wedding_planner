@@ -78,7 +78,6 @@ export default function VendorFilters({
               onChange({ ...value, category: category.slug, audience: "" })
             }
           >
-            <span aria-hidden="true">{category.icon}</span>{" "}
             {localName(category)}
           </Chip>
         ))}

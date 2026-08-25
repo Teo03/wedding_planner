@@ -90,7 +90,6 @@ export default function Plan() {
         {groups.map(([cat, items]) => (
           <div key={cat} className="rounded-xl border border-taupe-100 bg-white">
             <div className="border-b border-taupe-100 bg-cream-100 px-4 py-2 text-sm font-semibold text-taupe-500">
-              {items[0].categoryIcon}{" "}
               {localName({
                 name: cat,
                 name_mk: items[0].categoryNameMk,

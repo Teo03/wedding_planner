@@ -65,7 +65,6 @@ export default function CategoryBrowse() {
 
       <div>
         <h1 className="font-display text-3xl font-semibold">
-          <span aria-hidden="true">{category?.icon}</span>{" "}
           {category ? localName(category) : "..."}
         </h1>
         {category?.description && (

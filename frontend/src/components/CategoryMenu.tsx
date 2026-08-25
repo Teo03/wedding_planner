@@ -58,7 +58,6 @@ export default function CategoryMenu() {
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-2 text-sm font-semibold text-forest-600 hover:text-olive-400"
                 >
-                  <span aria-hidden="true">{category.icon || "•"}</span>
                   {localName(category)}
                 </Link>
                 <ul className="mt-1 space-y-0.5">

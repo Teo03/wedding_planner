@@ -47,9 +47,6 @@ export default function Home() {
               to={`/category/${category.slug}`}
               className="flex items-center gap-2.5 rounded-xl border border-taupe-100 bg-white p-4 transition hover:border-olive-300 hover:shadow-sm"
             >
-              <span className="text-2xl" aria-hidden="true">
-                {category.icon || "•"}
-              </span>
               <span className="text-sm font-medium">
                 {localName(category)}
               </span>
