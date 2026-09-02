@@ -4,12 +4,27 @@ import { useAsync } from "../hooks/useAsync";
 import VendorCard from "../components/VendorCard";
 import { useI18n, useLocalName } from "../i18n";
 
+// One vendor per category, picked for having a real photo of their own
+// (see the seed's own-photo set) rather than the generic placeholder, so the
+// homepage showcase looks like an actual wedding rather than stock art.
+const FEATURED_VENDOR_SLUGS = [
+  "cathedral-church-of-st-clement-of-ohrid",
+  "epinal",
+  "vezilka",
+  "foto-kanon",
+  "atelje-klara-bojana-flora",
+  "balkan-bend",
+];
+
 export default function Home() {
   const { t } = useI18n();
   const localName = useLocalName();
   const { data: categories } = useAsync(() => api.categories(), []);
   const { data: vendors } = useAsync(
-    () => api.vendors({ ordering: "-rating", rated: "1" }),
+    () =>
+      Promise.all(
+        FEATURED_VENDOR_SLUGS.map((slug) => api.vendor(slug).catch(() => null)),
+      ).then((results) => results.filter((v) => v !== null)),
     [],
   );
 
@@ -58,17 +73,17 @@ export default function Home() {
       <section>
         <div className="mb-4 flex items-baseline justify-between">
           <h2 className="font-display text-2xl font-semibold">
-            {t("home.topRated")}
+            {t("home.featured")}
           </h2>
           <Link
-            to="/vendors?ordering=-rating"
+            to="/vendors"
             className="text-sm font-medium text-olive-400 hover:text-forest-500"
           >
             {t("home.seeAll")} →
           </Link>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {vendors?.results.slice(0, 6).map((vendor) => (
+          {vendors?.map((vendor) => (
             <VendorCard key={vendor.id} vendor={vendor} />
           ))}
         </div>

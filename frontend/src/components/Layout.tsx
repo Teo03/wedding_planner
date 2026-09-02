@@ -42,6 +42,11 @@ export default function Layout({ children }: { children: ReactNode }) {
           )}
 
           <div className="ml-auto flex items-center gap-2">
+            {auth.user && (
+              <span className="hidden text-sm text-taupe-400 md:inline">
+                {auth.user.email}
+              </span>
+            )}
             {signedIn && (
             <Link
               to="/plan"

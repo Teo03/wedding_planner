@@ -38,7 +38,7 @@ export const en = {
       "Browse every kind of vendor, compare packages, and build your wedding plan as you go.",
     startPlan: "Start your plan",
     browseByCategory: "Browse by category",
-    topRated: "Top rated vendors",
+    featured: "Featured vendors",
     seeAll: "See all",
   },
 
@@ -221,7 +221,7 @@ export const mk: DeepPartial<typeof en> = {
       "Разгледајте ги сите видови понудувачи, споредете пакети и составете го вашиот свадбен список.",
     startPlan: "Започнете план",
     browseByCategory: "Разгледајте по категорија",
-    topRated: "Најдобро оценети",
+    featured: "Издвоени понудувачи",
     seeAll: "Види ги сите",
   },
 
